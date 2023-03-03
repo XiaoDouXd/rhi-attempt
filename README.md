@@ -12,22 +12,7 @@
 
 #### 一、编译环境：
 
-##### 1. 配置 PkgConfig
-
-windows:
-
-1. 前往 http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/
-2. 下载 [pkg-config_0.26-1_win32.zip](http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/pkg-config_0.26-1_win32.zip)
-3. 添加 `bin/pkg-config.exe` 到 `${库目录}`
-4. 下载 [gettext-runtime_0.18.1.1-2_win32.zip](http://ftp.gnome.org/pub/gnome/binaries/win32/dependencies/gettext-runtime_0.18.1.1-2_win32.zip)
-5. 添加 `bin/intl.dll` 到 `${库目录}`
-6. 前往 http://ftp.gnome.org/pub/gnome/binaries/win32/glib/2.28
-7. 下载 [glib_2.28.8-1_win32.zip](http://ftp.acc.umu.se/pub/gnome/binaries/win32/glib/2.28/glib_2.28.8-1_win32.zip)
-8. 添加 `bin/libglib-2.0-0.dll` 到 `${库目录}`
-
-linux: `sudo apt-get install pkg-config`
-
-##### 2. 配置 vulkan sdk
+##### 1. 配置 vulkan sdk
 
 windows:
 
@@ -48,9 +33,9 @@ sudo apt update
 sudo apt install vulkan-sdk
 ```
 
-##### 3. 配置 vcpkg
+##### 2. 配置 vcpkg
 
-可见：https://github.com/microsoft/vcpkg/blob/master/README_zh_CN.md
+详见：https://github.com/microsoft/vcpkg/blob/master/README_zh_CN.md
 
 #### 二、CMake 设置
 
