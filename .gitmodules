@@ -1,6 +1,6 @@
-[submodule "3rd/SDL"]
-	path = 3rd/SDL
+[submodule "3rd/SDL3"]
+	path = 3rd/SDL3
 	url = https://github.com/libsdl-org/SDL.git
-[submodule "3rd/SDL_image"]
-	path = 3rd/SDL_image
-	url = git@github.com:libsdl-org/SDL_image.git
+[submodule "3rd/SDL3_image"]
+	path = 3rd/SDL3_image
+	url = https://github.com/libsdl-org/SDL_image.git

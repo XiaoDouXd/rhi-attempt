@@ -25,6 +25,8 @@ project(${XD_PROJECT_NAME})
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
+add_subdirectory(3rd)
+
 # ----------------------------------------------------- collect src
 
 file(GLOB_RECURSE ALL_SOURCE "core/src/*.cpp" "core/src/*.c" "core/src/*.h" "core/src/*.hpp" "core/include/*.h" "core/include/*.hpp")
@@ -87,5 +89,15 @@ else()
 endif()
 target_include_directories(${PROJECT_NAME} PRIVATE "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include")
 message(STATUS ${PROJECT_NAME} "::CMakeLists::info: include physx from \"" "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include" "\"")
+
+# 添加 SDL
+target_include_directories(${PROJECT_NAME} PUBLIC 3rd/SDL3/include)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3-static)
+message(STATUS ${PROJECT_NAME} "::CMakeLists::info: include SDL3 from \"3rd/SDL3\"")
+
+# 添加 SDL_image
+target_include_directories(${PROJECT_NAME} PUBLIC 3rd/SDL3_image/include)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL3_image)
+message(STATUS ${PROJECT_NAME} "::CMakeLists::info: include SDL3 from \"3rd/SDL3_image\"")
 
 message(STATUS "\n-- " ${PROJECT_NAME} ":: # ----------------------------------------------------- cmake end\n--")
