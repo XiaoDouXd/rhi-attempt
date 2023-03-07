@@ -31,10 +31,10 @@ add_subdirectory(3rd)
 
 file(GLOB_RECURSE ALL_SOURCE "core/src/*.cpp" "core/src/*.c" "core/src/*.h" "core/src/*.hpp" "core/include/*.h" "core/include/*.hpp")
 
-include_directories(${PROJECT_NAME} ./core/include ./core/src)
-add_executable(${PROJECT_NAME} ${ALL_SOURCE})
-# target_include_directories(${PROJECT_NAME} PUBLIC ./core/include)
+include_directories(${PROJECT_NAME} ./core/include ./core/src ./3rd/stduuid/include)
+# target_include_directories(${PROJECT_NAME} PUBLIC ./core/include ./3rd/stduuid)
 # target_include_directories(${PROJECT_NAME} PRIVATE ./core/src)
+add_executable(${PROJECT_NAME} ${ALL_SOURCE})
 
 message(STATUS "\n-- " ${PROJECT_NAME} ":: # ----------------------------------------------------- build conf\n--")
 
@@ -99,5 +99,9 @@ message(STATUS ${PROJECT_NAME} "::CMakeLists::info: include SDL3 from \"3rd/SDL3
 target_include_directories(${PROJECT_NAME} PUBLIC 3rd/SDL3_image/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3_image)
 message(STATUS ${PROJECT_NAME} "::CMakeLists::info: include SDL3 from \"3rd/SDL3_image\"")
+
+# 添加 assimp
+find_package(assimp CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE assimp::assimp)
 
 message(STATUS "\n-- " ${PROJECT_NAME} ":: # ----------------------------------------------------- cmake end\n--")
