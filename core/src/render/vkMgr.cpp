@@ -29,6 +29,7 @@ namespace XD::Render
 #endif
 
     std::unique_ptr<VkMgr::Data> VkMgr::_inst = nullptr;
+    VkMgr::Dev VkMgr::_emptyDev = VkMgr::Dev();
 
     void VkMgr::init(const char** extensions, uint32_t extensionsCount)
     {
@@ -56,27 +57,38 @@ namespace XD::Render
 
     std::optional<uuids::uuid> VkMgr::createDevice(vk::DeviceCreateInfo& devInfo)
     {
-        auto uuid = uuidGenerator();
-        auto dev = (_inst->cDevs[uuid] = Dev());
+        auto uuid = uuidGenerator->operator()();
+        auto& dev = (_inst->cDevs[uuid] = std::move(Dev()));
 
         auto queueCount = devInfo.queueCreateInfoCount;
         for (size_t i = 0; i < queueCount; i++)
-        {
             dev.queueFamily.push_back(devInfo.pQueueCreateInfos[i].queueFamilyIndex);
-        }
+        dev.dev = _inst->phyDev.createDevice(devInfo);
+        dev.frontQueue = dev.dev.getQueue(dev.queueFamily.front(), 0);
+        return uuid;
+    }
+
+    bool VkMgr::createDescPool(const uuids::uuid& devId, vk::DescriptorPoolCreateInfo poolInfo)
+    {
+        auto& dev = getDev(devId);
+        if (!dev) return false;
+
+        auto err = dev.dev.createDescriptorPool(&poolInfo, nullptr, &(dev.descPool));
+        checkVkResult(err);
+        return true;
     }
 
     void VkMgr::checkVkResultCtype(VkResult r)
     {
         if (r == 0) return;
-        throw Exce(__LINE__, __FILE__, "XD::VkMgr Exce: Result = " + (int)r);
+        throw Exce(__LINE__, __FILE__, ("XD::VkMgr Exce: Result = " + std::to_string((int)r)).c_str());
         if (r < 0) abort();
     }
 
     void VkMgr::checkVkResult(vk::Result r)
     {
         if (r == vk::Result::eSuccess) return;
-        throw Exce(__LINE__, __FILE__, "XD::VkMgr Exce: Result = " + (int)r);
+        throw Exce(__LINE__, __FILE__, ("XD::VkMgr Exce: Result = " + std::to_string((int)r)).c_str());
     }
 
     void VkMgr::destroy()
@@ -197,7 +209,7 @@ namespace XD::Render
         devInfo.setEnabledExtensionCount(devExtCount);
         devInfo.setPpEnabledExtensionNames(devExt);
         _inst->mainDev.dev = _inst->phyDev.createDevice(devInfo);
-        _inst->mainDev.queue = _inst->mainDev.dev.getQueue(_inst->mainDev.queueFamily.front(), 0);
+        _inst->mainDev.frontQueue = _inst->mainDev.dev.getQueue(_inst->mainDev.queueFamily.front(), 0);
         _inst->initRec.dev = true;
     }
 

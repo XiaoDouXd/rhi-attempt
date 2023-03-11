@@ -1,8 +1,9 @@
 #pragma once
 
+#include <memory>
 #include "uuid.h"
 
 namespace XD
 {
-    extern uuids::uuid_random_generator uuidGenerator;
+    extern std::unique_ptr<uuids::uuid_random_generator> uuidGenerator;
 } // namespace XD::Render

@@ -18,10 +18,16 @@ namespace XD::Render
         struct Dev
         {
         public:
+            Dev() = default;
+            Dev(const Dev&) = delete;
+            ~Dev() = default;
+
             vk::Device          dev;
-            vk::Queue           queue;
+            vk::Queue           frontQueue;
             vk::DescriptorPool  descPool;
-            std::list<uint32_t>   queueFamily;
+            std::list<uint32_t> queueFamily;
+            operator bool() const { return (bool)dev; }
+            Dev& operator=(const Dev&) = delete;
         };
 
     private:
@@ -56,6 +62,7 @@ namespace XD::Render
 #endif
         };
         static std::unique_ptr<Data> _inst;
+        static Dev _emptyDev;
 
     public:
         static bool inited() { return (bool)_inst; }
@@ -71,17 +78,18 @@ namespace XD::Render
         static vk::PhysicalDevice& getPhyDev() { return _inst->phyDev; }
         static vk::Device& getDev() { return _inst->mainDev.dev; }
         static uint32_t getMinImageCount() { return _inst->minImageCount; }
-        static std::optional<Dev&> getDev(const uuids::uuid& devId = uuids::uuid())
+        static Dev& getDev(const uuids::uuid& devId = uuids::uuid())
         {
             if (devId.is_nil()) return _inst->mainDev;
             std::unordered_map<uuids::uuid, Dev>::iterator o;
-            if ((o = _inst->cDevs.find(devId)) == _inst->cDevs.end()) return std::nullopt;
+            if ((o = _inst->cDevs.find(devId)) == _inst->cDevs.end()) return _emptyDev;
             return o->second;
         }
 
     public:
         static std::optional<size_t> selectQueueFamily(std::function<bool(const vk::QueueFamilyProperties&, const size_t& idx)>);
         static std::optional<uuids::uuid> createDevice(vk::DeviceCreateInfo& devInfo);
+        static bool createDescPool(const uuids::uuid& devId, vk::DescriptorPoolCreateInfo poolInfo);
 
     private:
         static void createInst(const char** extensions, uint32_t extensionsCount);
