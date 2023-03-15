@@ -1,7 +1,7 @@
 
 #include "indexBuffer.h"
 #include "render/vkMgr.h"
-#include "xdBase/xdExce.h"
+#include "xdBase/exce.h"
 
 namespace XD::Render
 {

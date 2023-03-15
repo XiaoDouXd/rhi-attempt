@@ -104,7 +104,7 @@ namespace XD::Render::PresMgr
     void createSwapChain()
     {
         auto& dev = VkMgr::getDev().dev;
-        dev.getSwapchainImagesKHR();
+        // dev.getSwapchainImagesKHR(); todo
     }
 
     // -----------------------------------------------------
