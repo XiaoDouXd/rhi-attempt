@@ -1,6 +1,6 @@
 
 #include "render/vkMgr.h"
-#include "xdBase/xdExce.h"
+#include "xdBase/exce.h"
 #include "xdBase/uuidGen.h"
 
 #include <cassert>
@@ -9,9 +9,38 @@
 #include <cstdlib>        // abort
 #endif
 #include <cstring>        // memcpy
+#include <memory>
 
-namespace XD::Render
+namespace XD::Render::VkMgr
 {
+    struct Data
+    {
+    public:
+        struct InitRec
+        {
+        public:
+            bool dev;
+            bool phyDev;
+            bool queueFamily;
+            void clear() { dev = phyDev = queueFamily = false; }
+        };
+
+        vk::Instance        ins;
+        vk::PhysicalDevice  phyDev;
+        Dev                 mainDev;
+        std::unordered_map<uuids::uuid, Dev> cDevs;
+
+        uint32_t            minImageCount = 2;
+        InitRec             initRec;
+
+#ifdef XD_VK_DEBUG_REPORT
+        vk::DebugReportCallbackEXT  debugReportCB;
+#endif
+    };
+
+    static std::unique_ptr<XD::Render::VkMgr::Data> _inst = nullptr;
+    static Dev _emptyDev = Dev();
+
 #ifdef XD_VK_DEBUG_REPORT
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugReport(
         VkDebugReportFlagsEXT flags,
@@ -28,21 +57,24 @@ namespace XD::Render
     }
 #endif
 
-    std::unique_ptr<VkMgr::Data> VkMgr::_inst = nullptr;
-    VkMgr::Dev VkMgr::_emptyDev = VkMgr::Dev();
+    // -----------------------------------------------------
 
-    void VkMgr::init(const char** extensions, uint32_t extensionsCount)
+    bool inited() { return (bool)_inst; }
+    vk::Instance& getInst() { return _inst->ins; }
+    vk::PhysicalDevice& getPhyDev() { return _inst->phyDev; }
+    vk::Device& getDev() { return _inst->mainDev.dev; }
+    uint32_t getMinImageCount() { return _inst->minImageCount; }
+    Dev& getDev(const uuids::uuid& devId)
     {
-        if (_inst) return;
-
-        createInst(extensions, extensionsCount);
-        selectGPU();
-        selectMainQueueFamily();
-        createMainDevice();
-        createMainDescPool();
+        if (devId.is_nil()) return _inst->mainDev;
+        std::unordered_map<uuids::uuid, Dev>::iterator o;
+        if ((o = _inst->cDevs.find(devId)) == _inst->cDevs.end()) return _emptyDev;
+        return o->second;
     }
 
-    std::optional<size_t> VkMgr::selectQueueFamily(std::function<bool(const vk::QueueFamilyProperties&, const size_t& idx)> func)
+    // -----------------------------------------------------
+
+    std::optional<size_t> selectQueueFamily(std::function<bool(const vk::QueueFamilyProperties&, const size_t& idx)> func)
     {
         if (!_inst) throw Exce(__LINE__, __FILE__, "XD::VulkanMgr Exce: Instance Empty");
         if (!(_inst->initRec.phyDev)) throw Exce(__LINE__, __FILE__, "XD::VulkanMgr Exce: 没有初始化 GPU");
@@ -55,9 +87,9 @@ namespace XD::Render
         return std::nullopt;
     }
 
-    std::optional<uuids::uuid> VkMgr::createDevice(vk::DeviceCreateInfo& devInfo)
+    std::optional<uuids::uuid> createDevice(vk::DeviceCreateInfo& devInfo)
     {
-        auto uuid = uuidGenerator->operator()();
+        auto uuid = UUID::gen();
         auto& dev = (_inst->cDevs[uuid] = std::move(Dev()));
 
         auto queueCount = devInfo.queueCreateInfoCount;
@@ -68,7 +100,7 @@ namespace XD::Render
         return uuid;
     }
 
-    bool VkMgr::createDescPool(const uuids::uuid& devId, vk::DescriptorPoolCreateInfo poolInfo)
+    bool createDescPool(const uuids::uuid& devId, vk::DescriptorPoolCreateInfo poolInfo)
     {
         auto& dev = getDev(devId);
         if (!dev) return false;
@@ -78,20 +110,20 @@ namespace XD::Render
         return true;
     }
 
-    void VkMgr::checkVkResultCtype(VkResult r)
+    void checkVkResultCtype(VkResult r)
     {
         if (r == 0) return;
         throw Exce(__LINE__, __FILE__, ("XD::VkMgr Exce: Result = " + std::to_string((int)r)).c_str());
         if (r < 0) abort();
     }
 
-    void VkMgr::checkVkResult(vk::Result r)
+    void checkVkResult(vk::Result r)
     {
         if (r == vk::Result::eSuccess) return;
         throw Exce(__LINE__, __FILE__, ("XD::VkMgr Exce: Result = " + std::to_string((int)r)).c_str());
     }
 
-    void VkMgr::destroy()
+    void destroy()
     {
         vkDestroyDescriptorPool(_inst->mainDev.dev, _inst->mainDev.descPool, nullptr);
 #ifdef XD_VK_DEBUG_REPORT
@@ -106,10 +138,10 @@ namespace XD::Render
 
     // -----------------------------------------------------
 
-    void VkMgr::createInst(const char** extensions, uint32_t extensionsCount)
+    void createInst(const char** extensions, uint32_t extensionsCount)
     {
         if (_inst) return;
-        _inst = std::make_unique<Data>();
+        _inst = std::make_unique<XD::Render::VkMgr::Data>();
 
         // 创建 vk 实例并应用校验层
         vk::InstanceCreateInfo insInfo;
@@ -152,7 +184,7 @@ namespace XD::Render
 #endif
     }
 
-    void VkMgr::selectGPU()
+    void selectGPU()
     {
         if (!_inst) throw Exce(__LINE__, __FILE__, "XD::VkMgr Exce: Instance Empty");
         if (_inst->initRec.phyDev) throw Exce(__LINE__, __FILE__, "XD::VkMgr Exce: 重复选择 GPU");
@@ -173,7 +205,7 @@ namespace XD::Render
         _inst->initRec.phyDev = true;
     }
 
-    void VkMgr::selectMainQueueFamily()
+    void selectMainQueueFamily()
     {
         if (!_inst) throw Exce(__LINE__, __FILE__, "XD::VulkanMgr Exce: Instance Empty");
         if (!(_inst->initRec.phyDev)) throw Exce(__LINE__, __FILE__, "XD::VulkanMgr Exce: 没有初始化 GPU");
@@ -191,7 +223,7 @@ namespace XD::Render
         }
     }
 
-    void VkMgr::createMainDevice()
+    void createMainDevice()
     {
         if (!_inst) throw Exce(__LINE__, __FILE__, "XD::VkMgr Exce: Instance Empty");
         if (!(_inst->initRec.queueFamily)) throw Exce(__LINE__, __FILE__, "XD::VkMgr Exce: 没有初始化队列簇");
@@ -213,7 +245,7 @@ namespace XD::Render
         _inst->initRec.dev = true;
     }
 
-    void VkMgr::createMainDescPool()
+    void createMainDescPool()
     {
         if (!_inst) throw Exce(__LINE__, __FILE__, "XD::VulkanMgr Exce: Instance Empty");
         if (!(_inst->initRec.dev)) throw Exce(__LINE__, __FILE__, "XD::VulkanMgr Exce: 没有初始化 Dev");
@@ -242,5 +274,15 @@ namespace XD::Render
         auto err = _inst->mainDev.dev.createDescriptorPool(&poolInfo, nullptr, &(_inst->mainDev.descPool));
         checkVkResult(err);
 #undef ARRAYSIZE
+    }
+
+    void init(const char** extensions, uint32_t extensionsCount)
+    {
+        if (_inst) return;
+        createInst(extensions, extensionsCount);
+        selectGPU();
+        selectMainQueueFamily();
+        createMainDevice();
+        createMainDescPool();
     }
 } // namespace XD

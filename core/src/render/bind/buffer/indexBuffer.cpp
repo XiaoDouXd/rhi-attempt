@@ -5,26 +5,25 @@
 
 namespace XD::Render
 {
-    IndexBuffer::IndexBuffer(const std::vector<uint32_t>& indices, const uuids::uuid& devId) : _devMem(), _buf(), _size(0)
+    IndexBuffer::IndexBuffer(const std::vector<uint32_t>& indices, const uuids::uuid& devId) : _devMem(), _buf(), _size(indices.size() / 3)
     {
         auto& devPtr = VkMgr::getDev(devId);
         if (!devPtr) throw Exce(__LINE__, __FILE__, "XD::IndexBuffer Error: dev not found.");
-        auto dev = devPtr.dev;
+        auto& dev = devPtr.dev;
 
-        _size = indices.size() / 3;
         vk::BufferCreateInfo bufInfo;
-        bufInfo .setSize(indices.size() * sizeof(uint32_t))
+        bufInfo .setSize(_size * sizeof(uint32_t) * 3)
                 .setUsage(vk::BufferUsageFlagBits::eIndexBuffer)
                 .setSharingMode(vk::SharingMode::eExclusive);
 
-        //_buf = dev.createBuffer(bufInfo, nullptr, indices.data());
+        _buf = dev.createBuffer(bufInfo);
         vk::MemoryRequirements memReq;
         dev.getBufferMemoryRequirements(_buf, &memReq);
 
         vk::MemoryAllocateInfo allocInfo;
         allocInfo   .setAllocationSize(memReq.size)
                     .setMemoryTypeIndex(
-                        findMemoryType(memReq.memoryTypeBits,
+                        VkMgr::findMemoryType(memReq.memoryTypeBits,
                         vk::MemoryPropertyFlagBits::eHostVisible |
                         vk::MemoryPropertyFlagBits::eHostCoherent)
                     );
@@ -43,4 +42,6 @@ namespace XD::Render
     {
         
     }
+
+    size_t IndexBuffer::size() const noexcept { return _size; }
 } // namespace XD::Render

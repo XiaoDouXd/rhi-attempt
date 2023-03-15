@@ -3,7 +3,7 @@
 #include <memory>
 #include "uuid.h"
 
-namespace XD
+namespace XD::UUID
 {
-    extern std::unique_ptr<uuids::uuid_random_generator> uuidGenerator;
+    uuids::uuid gen();
 } // namespace XD::Render
