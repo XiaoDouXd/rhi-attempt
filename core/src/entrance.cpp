@@ -20,7 +20,7 @@ namespace XD::UUID
 {
     uuids::uuid gen()
     {
-        std::unique_ptr<uuids::uuid_random_generator> generator = nullptr;
+        static std::unique_ptr<uuids::uuid_random_generator> generator = nullptr;
         if (!generator)
         {
             std::random_device rd;
