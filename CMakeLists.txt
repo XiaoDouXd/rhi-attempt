@@ -91,17 +91,22 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${_VCPKG_INSTALLED_DIR}/${VC
 message(STATUS ${PROJECT_NAME} "::CMakeLists::info: include physx from \"" "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include" "\"")
 
 # 添加 SDL
-target_include_directories(${PROJECT_NAME} PUBLIC 3rd/SDL3/include)
+target_include_directories(${PROJECT_NAME} PRIVATE 3rd/SDL3/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3-static)
 message(STATUS ${PROJECT_NAME} "::CMakeLists::info: include SDL3 from \"3rd/SDL3\"")
 
 # 添加 SDL_image
-target_include_directories(${PROJECT_NAME} PUBLIC 3rd/SDL3_image/include)
+target_include_directories(${PROJECT_NAME} PRIVATE 3rd/SDL3_image/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3_image)
 message(STATUS ${PROJECT_NAME} "::CMakeLists::info: include SDL3 from \"3rd/SDL3_image\"")
 
 # 添加 assimp
 find_package(assimp CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE assimp::assimp)
+
+# 添加 glm
+# 链接 glm
+target_include_directories(${PROJECT_NAME} PUBLIC ./3rd/glm/glm)
+target_link_libraries(${PROJECT_NAME} PUBLIC glm)
 
 message(STATUS "\n-- " ${PROJECT_NAME} ":: # ----------------------------------------------------- cmake end\n--")

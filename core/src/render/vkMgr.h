@@ -28,7 +28,7 @@ namespace XD::Render::VkMgr
         Dev& operator=(Dev&&) = default;
     };
 
-    bool inited();
+    bool inited() noexcept;
     void checkVkResultCtype(VkResult err);
     void checkVkResult(vk::Result err);
 

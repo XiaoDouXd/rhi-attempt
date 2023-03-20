@@ -7,3 +7,6 @@
 [submodule "3rd/stduuid"]
 	path = 3rd/stduuid
 	url = https://github.com/mariusbancila/stduuid.git
+[submodule "3rd/glm"]
+	path = 3rd/glm
+	url = https://github.com/g-truc/glm.git

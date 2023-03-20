@@ -10,9 +10,9 @@ namespace XD::Render::PresMgr
 
     /// @brief 交换帧缓冲
     /// @param isRebuild 是否重建
-    void swapBuf(bool isRebuild = false);
+    void swap(bool isRebuild = false);
 
     /// @brief 是否已初始化
     /// @return 是否已初始化
-    bool inited();
+    bool inited() noexcept;
 } // namespace XD

@@ -2,9 +2,10 @@
 #include <SDL3/SDL_vulkan.h>
 #include <SDL3/SDL.h>
 
+#include "app/appMgr.h"
+#include "vkMgr.h"
 #include "xdBase/entrance.h"
 #include "xdBase/exce.h"
-#include "vkMgr.h"
 
 namespace XD::Render::PresMgr
 {
@@ -39,14 +40,12 @@ namespace XD::Render::PresMgr
 
     struct Data
     {
-    public: // --- sdl
-        SDL_Window*                 window;
-
-    public: // --- vulkan
+    public:
         vk::SurfaceKHR              surf;
         vk::SwapchainKHR            swapchain;
 
         std::vector<FrameData>      frames;
+        size_t                      frameIdx;
         vk::RenderPass              mainRenderPass;
         vk::Pipeline                mainPipeline;
         FormatData                  swapchainFormat;
@@ -58,13 +57,6 @@ namespace XD::Render::PresMgr
 
     void createWindow()
     {
-        const char* windowName = "wndName";
-
-        // 绑定到 vulkan 实例
-        SDL_WindowFlags wndFlags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
-        _inst->window = SDL_CreateWindow(xdWndInitConf_wndName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, xdWndInitConf_defWndWidth - 1, xdWndInitConf_defWndHeight, wndFlags);
-        SDL_SetWindowMinimumSize(_inst->window, xdWndInitConf_lodingWidth, xdWndInitConf_lodingHeight);
-
         // 遴选支持的表面格式 和 呈现格式
         auto surfFormats = VkMgr::getPhyDev().getSurfaceFormatsKHR();
         auto presentModes = VkMgr::getPhyDev().getSurfacePresentModesKHR();
@@ -146,11 +138,7 @@ namespace XD::Render::PresMgr
 
     void createSurf()
     {
-        VkSurfaceKHR surf = {};
-        if (SDL_Vulkan_CreateSurface(_inst->window, VkMgr::getInst(), &surf) == 0)
-            throw XD::Exce(__LINE__, __FILE__, "XD::Render::PresMgr: SDL Vulkan Surface 创建失败");
-        _inst->surf = surf;
-
+        _inst->surf = App::AppMgr::createSurf(VkMgr::getInst());
         auto surfCapabilities = VkMgr::getPhyDev().getSurfaceCapabilitiesKHR(_inst->surf);
         uint32_t minImgCount = _inst->swapchainFormat.minImgCountFromPresMode;
         minImgCount = std::max(surfCapabilities.minImageCount, minImgCount);
@@ -196,9 +184,9 @@ namespace XD::Render::PresMgr
 
     void resetSwapchain()
     {
-        static int w, h;
+        if (App::AppMgr::isSizeChange() && _inst->swapchain) return;
+        auto size = App::AppMgr::size();
         auto& dev = VkMgr::getDev().dev;
-        SDL_GetWindowSize(_inst->window, &w, &h);
 
         if (_inst->frames.size())
         {
@@ -233,8 +221,8 @@ namespace XD::Render::PresMgr
                     .setOldSwapchain(oldSwapchain);
         if (_inst->swapchainFormat.surfCapabilities.currentExtent.width == 0xffffffff)
         {
-            createInfo.imageExtent.width = w;
-            createInfo.imageExtent.height = h;
+            createInfo.imageExtent.width = size.x;
+            createInfo.imageExtent.height = size.y;
         }
         else
         {
@@ -263,8 +251,8 @@ namespace XD::Render::PresMgr
 
         vk::FramebufferCreateInfo frameBufCreateInfo;
         frameBufCreateInfo  .setAttachmentCount(1)
-                            .setWidth(w)
-                            .setHeight(h)
+                            .setWidth(size.x)
+                            .setHeight(size.y)
                             .setLayers(1)
                             .setRenderPass(_inst->mainRenderPass);
 
@@ -300,10 +288,8 @@ namespace XD::Render::PresMgr
 
     // -----------------------------------------------------
 
-    bool inited() { return (bool)_inst; }
+    bool inited() noexcept { return (bool)_inst; }
 
-    /// @brief 初始化呈示管理器
-    /// @param isClear 颜色缓冲是否清空
     void init(bool isClear)
     {
         if (inited()) throw Exce(__LINE__, __FILE__, "XD::Render::PresMgr: 重复初始化");
@@ -313,5 +299,22 @@ namespace XD::Render::PresMgr
         createWindow();
         createSurf();
         resetSwapchain();
+    }
+
+    void swap(bool isRebuild)
+    {
+        auto& queue = VkMgr::getDev().frontQueue;
+        uint32_t idx = (uint32_t)_inst->frameIdx;
+
+        vk::PresentInfoKHR info;
+        info.setWaitSemaphoreCount(1)
+            .setPWaitSemaphores(&_inst->frames[idx].renderComplete)
+            .setSwapchainCount(1)
+            .setPSwapchains(&_inst->swapchain)
+            .setPImageIndices(&idx);
+        auto result = queue.presentKHR(info);
+        if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) resetSwapchain();
+        else VkMgr::checkVkResult(result);
+        _inst->frameIdx = (_inst->frameIdx + 1) % _inst->frames.size();
     }
 }

@@ -1,6 +1,9 @@
 
 #include <iostream>
 
+#include "render/presMgr.h"
+#include "render/vkMgr.h"
+#include "app/appMgr.h"
 #include "xdBase/uuidGen.h"
 
 namespace XD
@@ -34,9 +37,17 @@ namespace XD::UUID
     }
 } // namespace XD
 
+void initRender()
+{
+    uint32_t externCount = 0;
+    XD::Render::VkMgr::init(XD::App::AppMgr::init(externCount), externCount);
+    XD::Render::PresMgr::init(true);
+}
+
 // 临时的 main 函数
 int main(int argc, char** argv)
 {
+    initRender();
     std::cout << "program end";
     return 0;
 }

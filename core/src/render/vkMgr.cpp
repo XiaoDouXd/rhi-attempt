@@ -59,7 +59,7 @@ namespace XD::Render::VkMgr
 
     // -----------------------------------------------------
 
-    bool inited() { return (bool)_inst; }
+    bool inited() noexcept { return (bool)_inst; }
     vk::Instance& getInst() { return _inst->ins; }
     vk::PhysicalDevice& getPhyDev() { return _inst->phyDev; }
     vk::Device& getDev() { return _inst->mainDev.dev; }
