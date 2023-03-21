@@ -3,9 +3,26 @@
 #include <SDL3/SDL.h>
 
 #include "app/appMgr.h"
+#include "render/presMgr.h"
 #include "vkMgr.h"
 #include "xdBase/entrance.h"
 #include "xdBase/exce.h"
+
+namespace XD::Render
+{
+    class Semaphore
+    {
+        friend Semaphore PresMgr::requestSemaphore();
+        friend void PresMgr::deleteSemaphore(Semaphore&);
+    public:
+        constexpr operator vk::Semaphore() const { return *ref; }
+        constexpr std::strong_ordering operator<=>(const Semaphore& o)
+        const { return (*ref)<=>(*o.ref); }
+
+    private:
+        std::list<vk::Semaphore>::const_iterator ref;
+    };
+}
 
 namespace XD::Render::PresMgr
 {
@@ -29,13 +46,8 @@ namespace XD::Render::PresMgr
     public:
         vk::Fence                   fence;
         vk::Framebuffer             frameBuf;
-        vk::CommandBuffer           cmdBuf;
-        vk::CommandPool             cmdPool;
         vk::Image                   img;
         vk::ImageView               imgView;
-
-        vk::Semaphore               imgAcquired;
-        vk::Semaphore               renderComplete;
     };
 
     struct Data
@@ -49,6 +61,10 @@ namespace XD::Render::PresMgr
         vk::RenderPass              mainRenderPass;
         vk::Pipeline                mainPipeline;
         FormatData                  swapchainFormat;
+
+        std::list<vk::Semaphore>    renderSemaphores;
+        std::vector<vk::Semaphore>  renderSemaphoresCache;
+        bool                        renderSemaphoreDirty;
     };
 
     static std::unique_ptr<XD::Render::PresMgr::Data> _inst = nullptr;
@@ -57,9 +73,11 @@ namespace XD::Render::PresMgr
 
     void createWindow()
     {
+        _inst->surf = AppMgr::createSurf(VkMgr::getInst());
+
         // 遴选支持的表面格式 和 呈现格式
-        auto surfFormats = VkMgr::getPhyDev().getSurfaceFormatsKHR();
-        auto presentModes = VkMgr::getPhyDev().getSurfacePresentModesKHR();
+        auto surfFormats = VkMgr::getPhyDev().getSurfaceFormatsKHR(_inst->surf);
+        auto presentModes = VkMgr::getPhyDev().getSurfacePresentModesKHR(_inst->surf);
 
         size_t targetFormat = SIZE_MAX;
         std::array targetVkFormat =
@@ -119,14 +137,11 @@ namespace XD::Render::PresMgr
         _inst->swapchainFormat.surfFormat = surfFormats[targetFormat];
 
         vk::ImageSubresourceRange imgSubresRange;
-        imgSubresRange  .setAspectMask(
-                            vk::ImageAspectFlagBits::eColor |
-                            vk::ImageAspectFlagBits::eDepth |
-                            vk::ImageAspectFlagBits::eStencil)
+        imgSubresRange  .setAspectMask(vk::ImageAspectFlagBits::eColor)
+                        .setLayerCount(VK_REMAINING_ARRAY_LAYERS)
                         .setBaseArrayLayer(0)
-                        .setLayerCount(0)
-                        .setBaseMipLevel(0)
-                        .setLevelCount(1);
+                        .setLevelCount(1)
+                        .setBaseMipLevel(0);
         vk::ImageViewCreateInfo imgViewCreateInfo;
         imgViewCreateInfo   .setViewType(vk::ImageViewType::e2D)
                             .setFormat(_inst->swapchainFormat.surfFormat.format)
@@ -134,13 +149,9 @@ namespace XD::Render::PresMgr
                             .setSubresourceRange(imgSubresRange);
         _inst->swapchainFormat.imgSubresRange = imgSubresRange;
         _inst->swapchainFormat.imgViewCreateInfo = imgViewCreateInfo;
-    }
 
-    void createSurf()
-    {
-        _inst->surf = App::AppMgr::createSurf(VkMgr::getInst());
         auto surfCapabilities = VkMgr::getPhyDev().getSurfaceCapabilitiesKHR(_inst->surf);
-        uint32_t minImgCount = _inst->swapchainFormat.minImgCountFromPresMode;
+        minImgCount = _inst->swapchainFormat.minImgCountFromPresMode;
         minImgCount = std::max(surfCapabilities.minImageCount, minImgCount);
         minImgCount = surfCapabilities.maxImageCount ?
             std::min(surfCapabilities.maxImageCount, minImgCount) : minImgCount;
@@ -184,8 +195,8 @@ namespace XD::Render::PresMgr
 
     void resetSwapchain()
     {
-        if (App::AppMgr::isSizeChange() && _inst->swapchain) return;
-        auto size = App::AppMgr::size();
+        if (AppMgr::isSizeChange() && _inst->swapchain) return;
+        auto size = AppMgr::size();
         auto& dev = VkMgr::getDev().dev;
 
         if (_inst->frames.size())
@@ -194,12 +205,8 @@ namespace XD::Render::PresMgr
             for (auto& frame : _inst->frames)
             {
                 dev.destroyFence(frame.fence);
-                dev.freeCommandBuffers(frame.cmdPool, {frame.cmdBuf});
-                dev.destroyCommandPool(frame.cmdPool);
                 dev.destroyImageView(frame.imgView);
                 dev.destroyFramebuffer(frame.frameBuf);
-                dev.destroySemaphore(frame.imgAcquired);
-                dev.destroySemaphore(frame.renderComplete);
             }
             _inst->frames.clear();
         }
@@ -216,9 +223,9 @@ namespace XD::Render::PresMgr
                     .setImageArrayLayers(1)
                     .setImageUsage(vk::ImageUsageFlagBits::eColorAttachment)
                     .setPreTransform(_inst->swapchainFormat.surfCapabilities.currentTransform)
-                    .setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::ePreMultiplied)
-                    .setClipped(true)
-                    .setOldSwapchain(oldSwapchain);
+                    // .setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::ePreMultiplied)
+                    .setClipped(true);
+        if (oldSwapchain) createInfo.setOldSwapchain(oldSwapchain);
         if (_inst->swapchainFormat.surfCapabilities.currentExtent.width == 0xffffffff)
         {
             createInfo.imageExtent.width = size.x;
@@ -234,16 +241,6 @@ namespace XD::Render::PresMgr
         if (oldSwapchain) dev.destroySwapchainKHR(oldSwapchain);
         auto images = dev.getSwapchainImagesKHR(_inst->swapchain);
         _inst->frames.resize(images.size());
-
-        vk::ImageSubresourceRange subresRange = {};
-        subresRange .setAspectMask(
-                        vk::ImageAspectFlagBits::eColor |
-                        vk::ImageAspectFlagBits::eDepth |
-                        vk::ImageAspectFlagBits::eStencil)
-                    .setBaseMipLevel(0)
-                    .setLevelCount(1)
-                    .setBaseArrayLayer(0)
-                    .setLayerCount(0);
 
         // -------------------------------------- 创建渲染通道
         createRenderPass_whileResetSwapchain(dev);
@@ -265,24 +262,10 @@ namespace XD::Render::PresMgr
             frame.imgView = dev.createImageView(_inst->swapchainFormat.imgViewCreateInfo.setImage(img));
             frame.frameBuf = dev.createFramebuffer(frameBufCreateInfo.setPAttachments(&frame.imgView));
 
-            // 创建 cmdbuf
-            vk::CommandPoolCreateInfo cmdPoolCreateInfo;
-            cmdPoolCreateInfo   .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer)
-                                .setQueueFamilyIndex(VkMgr::getDev().queueFamily.front());
-            frame.cmdPool = dev.createCommandPool(cmdPoolCreateInfo);
-            vk::CommandBufferAllocateInfo cmdBufAllocInfo;
-            cmdBufAllocInfo .setCommandPool(frame.cmdPool)
-                            .setLevel(vk::CommandBufferLevel::ePrimary)
-                            .setCommandBufferCount(1);
-            frame.cmdBuf = dev.allocateCommandBuffers(cmdBufAllocInfo).back();
-
             // 创建围挡和状态量
             vk::FenceCreateInfo fenceCreateInfo;
             fenceCreateInfo .setFlags(vk::FenceCreateFlagBits::eSignaled);
             frame.fence = dev.createFence(fenceCreateInfo);
-            vk::SemaphoreCreateInfo semaphoreCreateInfo;
-            frame.imgAcquired    = dev.createSemaphore(semaphoreCreateInfo);
-            frame.renderComplete = dev.createSemaphore(semaphoreCreateInfo);
         }
     }
 
@@ -293,22 +276,61 @@ namespace XD::Render::PresMgr
     void init(bool isClear)
     {
         if (inited()) throw Exce(__LINE__, __FILE__, "XD::Render::PresMgr: 重复初始化");
-        _inst->swapchainFormat.isClearEnable = isClear;
         _inst = std::make_unique<XD::Render::PresMgr::Data>();
+        _inst->swapchainFormat.isClearEnable = isClear;
+        _inst->renderSemaphoreDirty = true;
 
         createWindow();
-        createSurf();
         resetSwapchain();
+    }
+
+    Semaphore requestSemaphore()
+    {
+        auto& dev = VkMgr::getDev().dev;
+        XD::Render::Semaphore o;
+        vk::SemaphoreCreateInfo info;
+        auto inst = dev.createSemaphore(info);
+
+        _inst->renderSemaphores.emplace_back(std::move(inst));
+        o.ref = --_inst->renderSemaphores.end();
+
+        _inst->renderSemaphoreDirty = true;
+        return o;
+    }
+
+    void deleteSemaphore(Semaphore& semaphore)
+    {
+        if (semaphore.ref == _inst->renderSemaphores.cend()) return;
+        auto& dev = VkMgr::getDev().dev;
+        dev.destroySemaphore(semaphore);
+        _inst->renderSemaphores.erase(semaphore.ref);
+        semaphore.ref = _inst->renderSemaphores.cend();
+        _inst->renderSemaphoreDirty = true;
     }
 
     void swap(bool isRebuild)
     {
+        auto& dev = VkMgr::getDev().dev;
         auto& queue = VkMgr::getDev().frontQueue;
         uint32_t idx = (uint32_t)_inst->frameIdx;
 
+        auto err = dev.waitForFences({_inst->frames[idx].fence}, true, UINT64_MAX);
+        VkMgr::checkVkResult(err);
+        dev.resetFences({_inst->frames[idx].fence});
+
         vk::PresentInfoKHR info;
-        info.setWaitSemaphoreCount(1)
-            .setPWaitSemaphores(&_inst->frames[idx].renderComplete)
+
+        // 整理信号量
+        if (_inst->renderSemaphoreDirty)
+        {
+            size_t i = 0;
+            _inst->renderSemaphoresCache.resize(_inst->renderSemaphores.size());
+            for (const auto& semaphore : _inst->renderSemaphores)
+                _inst->renderSemaphoresCache[i++] = semaphore;
+            _inst->renderSemaphoreDirty = false;
+        }
+
+        info.setWaitSemaphores(_inst->renderSemaphoresCache)
             .setSwapchainCount(1)
             .setPSwapchains(&_inst->swapchain)
             .setPImageIndices(&idx);
@@ -316,5 +338,26 @@ namespace XD::Render::PresMgr
         if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) resetSwapchain();
         else VkMgr::checkVkResult(result);
         _inst->frameIdx = (_inst->frameIdx + 1) % _inst->frames.size();
+    }
+
+    void destroy()
+    {
+        if (!inited()) return;
+        auto& dev = VkMgr::getDev().dev;
+        if (_inst->frames.size())
+        {
+            // img 字段是由交换链给出的 其生命周期受到交换链控制
+            for (auto& frame : _inst->frames)
+            {
+                dev.destroyFence(frame.fence);
+                dev.destroyImageView(frame.imgView);
+                dev.destroyFramebuffer(frame.frameBuf);
+            }
+            _inst->frames.clear();
+        }
+        if (_inst->mainRenderPass) dev.destroyRenderPass(_inst->mainRenderPass);
+        if (_inst->mainPipeline) dev.destroyPipeline(_inst->mainPipeline);
+        if (_inst->swapchain) dev.destroySwapchainKHR(_inst->swapchain);
+        _inst.reset();
     }
 }

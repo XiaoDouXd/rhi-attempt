@@ -4,17 +4,43 @@
 #include <glm.hpp>
 #include <vulkan/vulkan.hpp>
 
-namespace XD::App::AppMgr
+namespace XD::AppMgr
 {
+    /// @brief 窗口宽
+    /// @return 窗口宽
     int width();
+
+    /// @brief 窗口高
+    /// @return 窗口高
     int height();
+
+    /// @brief 窗口大小
+    /// @return 窗口大小
     glm::i32vec2 size();
 
     /// @brief 从上一次调用该函数至今窗口大小是否发生了改变
     /// @return 从上一次调用该函数至今窗口大小是否发生了改变
     bool isSizeChange();
 
+    /// @brief 初始化
+    /// @param extensionsCount vk 扩展信息
+    /// @return vk 扩展数量
     const char** init(uint32_t& extensionsCount);
+
+    /// @brief 创建表面
+    /// @param vkInst vk 实例
+    /// @return 表面
     vk::SurfaceKHR createSurf(vk::Instance& vkInst);
+
+    /// @brief 是否已经初始化
+    /// @return 是否已经初始化
     bool inited() noexcept;
+
+    /// @brief 刷新帧
+    /// @param quit 是否退出
+    /// @param checkPlatformSpecialEvent 是否检查平台特殊事件
+    void update(bool& quit, bool checkPlatformSpecialEvent);
+
+    /// @brief 销毁
+    void destroy();
 }

@@ -247,8 +247,8 @@ namespace XD::Render::VkMgr
 
     void createMainDescPool()
     {
-        if (!_inst) throw Exce(__LINE__, __FILE__, "XD::VulkanMgr Exce: Instance Empty");
-        if (!(_inst->initRec.dev)) throw Exce(__LINE__, __FILE__, "XD::VulkanMgr Exce: 没有初始化 Dev");
+        if (!_inst) throw Exce(__LINE__, __FILE__, "XD::VkMgr Exce: Instance Empty");
+        if (!(_inst->initRec.dev)) throw Exce(__LINE__, __FILE__, "XD::VkMgr Exce: 没有初始化 Dev");
 
 #define ARRAYSIZE(_ARR)          ((int)(sizeof(_ARR) / sizeof(*(_ARR))))
         vk::DescriptorPoolSize poolSizes[] =
