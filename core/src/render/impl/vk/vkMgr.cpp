@@ -1,5 +1,5 @@
 
-#include "render/vkMgr.h"
+#include "render/impl/vk/vkMgr.h"
 #include "xdBase/exce.h"
 #include "xdBase/uuidGen.h"
 
@@ -11,7 +11,7 @@
 #include <cstring>        // memcpy
 #include <memory>
 
-namespace XD::Render::VkMgr
+namespace XD::Render::Vk::VkMgr
 {
     struct Data
     {
@@ -38,7 +38,7 @@ namespace XD::Render::VkMgr
 #endif
     };
 
-    static std::unique_ptr<XD::Render::VkMgr::Data> _inst = nullptr;
+    static std::unique_ptr<XD::Render::Vk::VkMgr::Data> _inst = nullptr;
     static Dev _emptyDev = Dev();
 
 #ifdef XD_VK_DEBUG_REPORT
@@ -141,7 +141,7 @@ namespace XD::Render::VkMgr
     void createInst(const char** extensions, uint32_t extensionsCount)
     {
         if (_inst) return;
-        _inst = std::make_unique<XD::Render::VkMgr::Data>();
+        _inst = std::make_unique<XD::Render::Vk::VkMgr::Data>();
 
         // 创建 vk 实例并应用校验层
         vk::InstanceCreateInfo insInfo;

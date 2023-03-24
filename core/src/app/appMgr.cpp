@@ -3,6 +3,7 @@
 #include <SDL3/SDL_image.h>
 #include <SDL3/SDL_vulkan.h>
 
+#include "SDL_video.h"
 #include "appMgr.h"
 #include "xdBase/entrance.h"
 #include "xdBase/exce.h"
@@ -33,6 +34,7 @@ namespace XD::AppMgr
     void refreshSize() { SDL_GetWindowSize(_inst->hWnd, &_inst->w, &_inst->h); }
     int width() { return _inst->w; }
     int height() { return _inst->h; }
+    SDL_Window& wnd() { return *_inst->hWnd; }
     glm::i32vec2 size() { return {_inst->w, _inst->h}; }
     bool isSizeChange()
     {
@@ -48,9 +50,9 @@ namespace XD::AppMgr
 
     bool inited() noexcept { return (bool)_inst; }
 
-    const char** init(uint32_t& extensionsCount)
+    void init()
     {
-        if (_inst) return nullptr;
+        if (_inst) return;
         _inst = std::make_unique<Data>();
 
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMEPAD) != 0)
@@ -69,12 +71,6 @@ namespace XD::AppMgr
             auto icon = IMG_LoadPNG_RW(iconSurf);
             SDL_SetWindowIcon(_inst->hWnd, icon);
         }
-
-        extensionsCount = 0;
-        SDL_Vulkan_GetInstanceExtensions(&extensionsCount, NULL);
-        const char** extensions = new const char*[extensionsCount];
-        SDL_Vulkan_GetInstanceExtensions(&extensionsCount, extensions);
-        return extensions;
     }
 
     vk::SurfaceKHR createSurf(vk::Instance& vkInst)

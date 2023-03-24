@@ -3,28 +3,13 @@
 #include <SDL3/SDL.h>
 
 #include "app/appMgr.h"
-#include "render/presMgr.h"
+#include "render/impl/vk/presMgr.h"
+#include "render/impl/vk/vkMgr.h"
 #include "vkMgr.h"
 #include "xdBase/entrance.h"
 #include "xdBase/exce.h"
 
-namespace XD::Render
-{
-    class Semaphore
-    {
-        friend Semaphore PresMgr::requestSemaphore();
-        friend void PresMgr::deleteSemaphore(Semaphore&);
-    public:
-        constexpr operator vk::Semaphore() const { return *ref; }
-        constexpr std::strong_ordering operator<=>(const Semaphore& o)
-        const { return (*ref)<=>(*o.ref); }
-
-    private:
-        std::list<vk::Semaphore>::const_iterator ref;
-    };
-}
-
-namespace XD::Render::PresMgr
+namespace XD::Render::Vk::PresMgr
 {
     struct FormatData
     {
@@ -48,6 +33,7 @@ namespace XD::Render::PresMgr
         vk::Framebuffer             frameBuf;
         vk::Image                   img;
         vk::ImageView               imgView;
+        vk::Semaphore               imgAcquired;
     };
 
     struct Data
@@ -57,23 +43,29 @@ namespace XD::Render::PresMgr
         vk::SwapchainKHR            swapchain;
 
         std::vector<FrameData>      frames;
-        size_t                      frameIdx;
+        uint32_t                    frameIdx;
         vk::RenderPass              mainRenderPass;
         vk::Pipeline                mainPipeline;
         FormatData                  swapchainFormat;
+        bool                        rebuildSwapchain;
 
         std::list<vk::Semaphore>    renderSemaphores;
         std::vector<vk::Semaphore>  renderSemaphoresCache;
         bool                        renderSemaphoreDirty;
     };
 
-    static std::unique_ptr<XD::Render::PresMgr::Data> _inst = nullptr;
+    static std::unique_ptr<XD::Render::Vk::PresMgr::Data> _inst = nullptr;
 
     // -----------------------------------------------------
 
     void createWindow()
     {
-        _inst->surf = AppMgr::createSurf(VkMgr::getInst());
+        if (!_inst) throw Exce(__LINE__, __FILE__, "XD::App::AppMgr: 未初始化 SDL");
+
+        VkSurfaceKHR surf = {};
+        if (SDL_Vulkan_CreateSurface(&AppMgr::wnd(), VkMgr::getInst(), &surf) == 0)
+            throw XD::Exce(__LINE__, __FILE__, "XD::Render::PresMgr: SDL Vulkan Surface 创建失败");
+        _inst->surf = surf;
 
         // 遴选支持的表面格式 和 呈现格式
         auto surfFormats = VkMgr::getPhyDev().getSurfaceFormatsKHR(_inst->surf);
@@ -207,8 +199,8 @@ namespace XD::Render::PresMgr
                 dev.destroyFence(frame.fence);
                 dev.destroyImageView(frame.imgView);
                 dev.destroyFramebuffer(frame.frameBuf);
+                dev.destroySemaphore(frame.imgAcquired);
             }
-            _inst->frames.clear();
         }
         if (_inst->mainRenderPass) dev.destroyRenderPass(_inst->mainRenderPass);
         if (_inst->mainPipeline) dev.destroyPipeline(_inst->mainPipeline);
@@ -266,6 +258,9 @@ namespace XD::Render::PresMgr
             vk::FenceCreateInfo fenceCreateInfo;
             fenceCreateInfo .setFlags(vk::FenceCreateFlagBits::eSignaled);
             frame.fence = dev.createFence(fenceCreateInfo);
+
+            vk::SemaphoreCreateInfo semaphoreCreateInfo;
+            frame.imgAcquired = dev.createSemaphore(semaphoreCreateInfo);
         }
     }
 
@@ -276,68 +271,56 @@ namespace XD::Render::PresMgr
     void init(bool isClear)
     {
         if (inited()) throw Exce(__LINE__, __FILE__, "XD::Render::PresMgr: 重复初始化");
-        _inst = std::make_unique<XD::Render::PresMgr::Data>();
+        _inst = std::make_unique<XD::Render::Vk::PresMgr::Data>();
         _inst->swapchainFormat.isClearEnable = isClear;
         _inst->renderSemaphoreDirty = true;
+        _inst->rebuildSwapchain = true;
 
         createWindow();
         resetSwapchain();
     }
 
-    Semaphore requestSemaphore()
+    void begRender()
     {
+        if (_inst->rebuildSwapchain) resetSwapchain();
         auto& dev = VkMgr::getDev().dev;
-        XD::Render::Semaphore o;
-        vk::SemaphoreCreateInfo info;
-        auto inst = dev.createSemaphore(info);
-
-        _inst->renderSemaphores.emplace_back(std::move(inst));
-        o.ref = --_inst->renderSemaphores.end();
-
-        _inst->renderSemaphoreDirty = true;
-        return o;
+        auto& lastFrame = _inst->frames[_inst->frameIdx];
+        auto resVal = dev.acquireNextImageKHR(_inst->swapchain, UINT64_MAX, lastFrame.imgAcquired);
+        if (resVal.result == vk::Result::eErrorOutOfDateKHR || resVal.result == vk::Result::eSuboptimalKHR)
+        { _inst->rebuildSwapchain = true; return; }
+        else VkMgr::checkVkResult(resVal.result);
+        _inst->frameIdx = resVal.value;
     }
 
-    void deleteSemaphore(Semaphore& semaphore)
-    {
-        if (semaphore.ref == _inst->renderSemaphores.cend()) return;
-        auto& dev = VkMgr::getDev().dev;
-        dev.destroySemaphore(semaphore);
-        _inst->renderSemaphores.erase(semaphore.ref);
-        semaphore.ref = _inst->renderSemaphores.cend();
-        _inst->renderSemaphoreDirty = true;
-    }
-
-    void swap(bool isRebuild)
+    void endRender(bool isRebuild)
     {
         auto& dev = VkMgr::getDev().dev;
         auto& queue = VkMgr::getDev().frontQueue;
-        uint32_t idx = (uint32_t)_inst->frameIdx;
+        auto idx = _inst->frameIdx;
+        auto& frame = _inst->frames[_inst->frameIdx];
 
-        auto err = dev.waitForFences({_inst->frames[idx].fence}, true, UINT64_MAX);
+        auto err = dev.waitForFences({frame.fence}, true, UINT64_MAX);
         VkMgr::checkVkResult(err);
-        dev.resetFences({_inst->frames[idx].fence});
+        dev.resetFences({frame.fence});
 
-        vk::PresentInfoKHR info;
-
-        // 整理信号量
         if (_inst->renderSemaphoreDirty)
         {
             size_t i = 0;
-            _inst->renderSemaphoresCache.resize(_inst->renderSemaphores.size());
+            _inst->renderSemaphoresCache.resize(_inst->renderSemaphores.size() + 1);
             for (const auto& semaphore : _inst->renderSemaphores)
                 _inst->renderSemaphoresCache[i++] = semaphore;
             _inst->renderSemaphoreDirty = false;
         }
 
-        info.setWaitSemaphores(_inst->renderSemaphoresCache)
+        vk::PresentInfoKHR presentInfo;
+        presentInfo.setWaitSemaphores(_inst->renderSemaphoresCache)
             .setSwapchainCount(1)
             .setPSwapchains(&_inst->swapchain)
             .setPImageIndices(&idx);
-        auto result = queue.presentKHR(info);
-        if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) resetSwapchain();
+        auto result = queue.presentKHR(presentInfo);
+        if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
+            _inst->rebuildSwapchain = true;
         else VkMgr::checkVkResult(result);
-        _inst->frameIdx = (_inst->frameIdx + 1) % _inst->frames.size();
     }
 
     void destroy()
@@ -352,6 +335,7 @@ namespace XD::Render::PresMgr
                 dev.destroyFence(frame.fence);
                 dev.destroyImageView(frame.imgView);
                 dev.destroyFramebuffer(frame.frameBuf);
+                dev.destroySemaphore(frame.imgAcquired);
             }
             _inst->frames.clear();
         }
@@ -359,5 +343,49 @@ namespace XD::Render::PresMgr
         if (_inst->mainPipeline) dev.destroyPipeline(_inst->mainPipeline);
         if (_inst->swapchain) dev.destroySwapchainKHR(_inst->swapchain);
         _inst.reset();
+    }
+
+    // ----------------------------------------------------- 信号量
+
+    Semaphore requestSemaphore()
+    {
+        auto& dev = VkMgr::getDev().dev;
+        XD::Render::Vk::Semaphore o;
+        vk::SemaphoreCreateInfo info;
+        auto inst = dev.createSemaphore(info);
+
+        _inst->renderSemaphores.emplace_front(std::move(inst));
+        o._itr = _inst->renderSemaphores.begin();
+
+        _inst->renderSemaphoreDirty = true;
+        return o;
+    }
+}
+
+
+namespace XD::Render::Vk
+{
+    void Semaphore::del()
+    {
+        if (_itr == PresMgr::_inst->renderSemaphores.cend()) return;
+        auto& dev = VkMgr::getDev().dev;
+        dev.destroySemaphore(*this);
+        PresMgr::_inst->renderSemaphores.erase(_itr);
+        _itr = PresMgr::_inst->renderSemaphores.cend();
+        PresMgr::_inst->renderSemaphoreDirty = true;
+    }
+
+    void Semaphore::set(const uint64_t& value)
+    {
+        auto& dev = VkMgr::getDev().dev;
+        vk::SemaphoreSignalInfo info;
+        info.setSemaphore(*this)
+            .setValue(value);
+        dev.signalSemaphore(info);
+    }
+
+    constexpr Semaphore::operator bool() const
+    {
+        return _itr != PresMgr::_inst->renderSemaphores.cend();
     }
 }

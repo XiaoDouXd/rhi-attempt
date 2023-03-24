@@ -9,7 +9,7 @@
 #define XD_VK_DEBUG_REPORT
 #endif
 
-namespace XD::Render::VkMgr
+namespace XD::Render::Vk::VkMgr
 {
     /// @brief 虚拟设备信息
     struct Dev

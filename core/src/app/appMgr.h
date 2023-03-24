@@ -1,11 +1,16 @@
 #pragma once
 
+#include "SDL_video.h"
 #include <cstdint>
 #include <glm.hpp>
 #include <vulkan/vulkan.hpp>
 
 namespace XD::AppMgr
 {
+    /// @brief 窗口
+    /// @return 窗口句柄
+    SDL_Window& wnd();
+
     /// @brief 窗口宽
     /// @return 窗口宽
     int width();
@@ -25,12 +30,7 @@ namespace XD::AppMgr
     /// @brief 初始化
     /// @param extensionsCount vk 扩展信息
     /// @return vk 扩展数量
-    const char** init(uint32_t& extensionsCount);
-
-    /// @brief 创建表面
-    /// @param vkInst vk 实例
-    /// @return 表面
-    vk::SurfaceKHR createSurf(vk::Instance& vkInst);
+    void init();
 
     /// @brief 是否已经初始化
     /// @return 是否已经初始化

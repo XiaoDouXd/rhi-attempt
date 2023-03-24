@@ -160,7 +160,7 @@ namespace XD::Event
             if (eDic.find(hashCode) == eDic.end()) return;
             for (auto& lDic : eDic[hashCode])
             {
-                auto cb = reinterpret_cast<__xd_staticEvent_Func*>(lDic.second.cb.get())->
+                auto cb = reinterpret_cast<__xd_staticEvent_Func<EType>*>(lDic.second.cb.get())->
                     func(std::forward<ArgTypes>(args)...);
             }
         }
@@ -179,7 +179,7 @@ namespace XD::Event
             if (eDic.find(hashCode) == eDic.end()) return;
             for (auto& lDic : eDic[hashCode])
             {
-                auto cbPtr = reinterpret_cast<__xd_staticEvent_Func*>(lDic.second.cb.get());
+                auto cbPtr = reinterpret_cast<__xd_staticEvent_Func<EType>*>(lDic.second.cb.get());
                 _inst->waitingQueue.emplace_back(
                     EventAsyncHandler(
                         &lDic.second,

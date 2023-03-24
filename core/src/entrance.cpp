@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <ostream>
 
 #include "xdBase/exce.h"
 #include "xdBase/uuidGen.h"
@@ -7,8 +8,7 @@
 #include "app/appMgr.h"
 #include "app/event/staticEventMgr.hpp"
 #include "app/util/timeMgr.h"
-#include "render/presMgr.h"
-#include "render/vkMgr.h"
+#include "render/renderMgr.h"
 
 namespace XD
 {
@@ -45,18 +45,14 @@ namespace XD
     bool inited() { return _inited; }
     void init()
     {
-        // 初始化系统窗口 和 渲染表面
-        uint32_t externCount = 0;
-        auto externs = XD::AppMgr::init(externCount);
-        XD::Render::VkMgr::init(externs, externCount);
-        XD::Render::PresMgr::init(true);
+        XD::AppMgr::init();
+        XD::Render::Mgr::init();
 
         // 初始化事件
         XD::Event::StaticEventMgr::init();
 
         // 初始化工具
         XD::Util::TimeMgr::init();
-
         _inited = true;
     }
 
@@ -69,22 +65,18 @@ namespace XD
         XD::Event::StaticEventMgr::update();
 
         // 切换交换链
+        XD::Render::Mgr::begUpdate();
         XD::AppMgr::update(quit, true);
-        XD::Render::PresMgr::swap();
+        XD::Render::Mgr::endUpdate();
     }
 
     void destroy()
     {
         if (!_inited) throw Exce(__LINE__, __FILE__, "XD::entrance: 未初始化实例");
 
-        // 销毁渲染支撑
-        XD::Render::PresMgr::destroy();
-        XD::Render::VkMgr::destroy();
-
-        // 销毁系统窗口
+        XD::Render::Mgr::destroy();
         XD::AppMgr::destroy();
 
-        // 销毁各个管理器
         XD::Event::StaticEventMgr::destroy();
         XD::Util::TimeMgr::destroy();
 
@@ -97,6 +89,7 @@ int main(int argc, char** argv)
 {
     try
     {
+        std::cout<< "测试汉字 utf-8" << std::endl;
         XD::init();
         bool done = false;
         while (!done) XD::update(done);

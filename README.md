@@ -4,7 +4,7 @@
 
 ##### 1. 根目录名格式要求：
 
-该项目使用 vcpkg 管理大部分第三方库，vcpkg 的 manifest 模式要求项目名必须为全小写、横杠模式。由于该项目在 CMake 中定义根目录的目录名为项目名，故目录名也必须用全小写、横杠模式。
+该项目使用 vcpkg 管理大部分第三方库，vcpkg 的 manifest 模式要求项目名必须为全小写、横杠模式(例如: proj-vk-test)。由于该项目在 CMake 中定义根目录的目录名为项目名，故目录名也必须用全小写、横杠模式。
 
 ##### 2. 编译器：
 
@@ -51,4 +51,3 @@ set(CMAKE_TOOLCHAIN_FILE "{}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRIN
 
 # --------------------------------- 可选的 --
 ```
-
