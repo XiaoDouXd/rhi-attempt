@@ -3,7 +3,6 @@
 #include "SDL_video.h"
 #include <cstdint>
 #include <glm.hpp>
-#include <vulkan/vulkan.hpp>
 
 namespace XD::AppMgr
 {

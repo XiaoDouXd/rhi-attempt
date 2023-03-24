@@ -7,7 +7,6 @@
 #include "appMgr.h"
 #include "xdBase/entrance.h"
 #include "xdBase/exce.h"
-#include <functional>
 
 namespace XD::AppMgr
 {
@@ -38,7 +37,6 @@ namespace XD::AppMgr
     glm::i32vec2 size() { return {_inst->w, _inst->h}; }
     bool isSizeChange()
     {
-        std::function<void(int)> a;
         static int oldW = -1, oldH = -1;
         SDL_GetWindowSize(_inst->hWnd, &_inst->w, &_inst->h);
         if (_inst->w == oldW && _inst->h == oldH) return false;
@@ -71,16 +69,6 @@ namespace XD::AppMgr
             auto icon = IMG_LoadPNG_RW(iconSurf);
             SDL_SetWindowIcon(_inst->hWnd, icon);
         }
-    }
-
-    vk::SurfaceKHR createSurf(vk::Instance& vkInst)
-    {
-        if (!_inst) throw Exce(__LINE__, __FILE__, "XD::App::AppMgr: 未初始化 SDL");
-
-        VkSurfaceKHR surf = {};
-        if (SDL_Vulkan_CreateSurface(_inst->hWnd, vkInst, &surf) == 0)
-            throw XD::Exce(__LINE__, __FILE__, "XD::Render::PresMgr: SDL Vulkan Surface 创建失败");
-        return surf;
     }
 
     void destroy()
