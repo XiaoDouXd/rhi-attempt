@@ -1,22 +1,30 @@
 #pragma once
 
-#include "render/gRes/gRes.h"
 #include <memory>
 #include <stdint.h>
+
+#include "render/gRes/gRes.h"
 
 namespace XD::Render
 {
     class Buffer : public GRes
     {
     public:
+        static constexpr GResType gResType = GResType::Buffer;
+
+    public:
+        /// @brief 总大小
         virtual size_t size() const = 0;
-        virtual size_t stride() const = 0;
-        virtual uint32_t usage() const = 0;
-        virtual void release() noexcept = 0;
+
+        /// @brief 获得实现信息
+        /// @return 实现信息
+        const GResHolder<gResType>& getImplInfo() const;
 
     protected:
-        Buffer() = default;
+        Buffer();
         virtual ~Buffer() = default;
-        std::unique_ptr<GResMemHolderBase> _memHolder;
+
+        std::unique_ptr<GResHolderBase> _holder = nullptr;
+        size_t                          _size;
     };
 } // namespace XD::Render

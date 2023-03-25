@@ -1,7 +1,11 @@
 
 #include <iostream>
+#include <memory>
 #include <ostream>
+#include <stdint.h>
+#include <vector>
 
+#include "uuid.h"
 #include "xdBase/exce.h"
 #include "xdBase/uuidGen.h"
 
