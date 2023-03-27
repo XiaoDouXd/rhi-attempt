@@ -139,6 +139,6 @@ namespace XD::Render
         template<size_t i>
         struct LayoutAt
         { static constexpr BufferLayoutType value = LayoutAtImpl<i, layouts...>::v; };
-        static size_t memorySize() { return memorySizeImpl(__xd_format_list{}); }
+        static constexpr size_t memorySize() { return memorySizeImpl(__xd_format_list{}); }
     };
 }
