@@ -8,8 +8,8 @@ namespace XD
     extern const char* xdWndInitConf_wndName;
     extern int xdWndInitConf_defWndWidth;
     extern int xdWndInitConf_defWndHeight;
-    extern int xdWndInitConf_lodingWidth;
-    extern int xdWndInitConf_lodingHeight;
+    extern int xdWndInitConf_loadingWidth;
+    extern int xdWndInitConf_loadingHeight;
 }
 
 namespace XD

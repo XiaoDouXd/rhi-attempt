@@ -61,7 +61,7 @@ namespace XD::AppMgr
         // 绑定到 vulkan 实例
         SDL_WindowFlags wndFlags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
         _inst->hWnd = SDL_CreateWindow(xdWndInitConf_wndName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, xdWndInitConf_defWndWidth - 1, xdWndInitConf_defWndHeight, wndFlags);
-        SDL_SetWindowMinimumSize(_inst->hWnd, xdWndInitConf_lodingWidth, xdWndInitConf_lodingHeight);
+        SDL_SetWindowMinimumSize(_inst->hWnd, xdWndInitConf_loadingWidth, xdWndInitConf_loadingHeight);
 
         if (xdWndInitConf_iconPngData && xdWndInitConf_iconPngSize)
         {
