@@ -11,7 +11,7 @@
 
 namespace XD::Render
 {
-    class BufferLayout : public GRes
+    class BufferLayoutBase : public GRes
     {
     public:
         static constexpr GResType gResType = GResType::BufferLayout;
@@ -21,7 +21,7 @@ namespace XD::Render
         /// @param types 单元内部的类型 (location 为 0~types.size() 顺序排列)
         /// @param rate 设置缓冲单元按实例输入还是按顶点输入
         /// @param order 排序方式
-        BufferLayout(
+        BufferLayoutBase(
             std::initializer_list<BufferLayoutType> types,
             BufferLayoutRate rate = BufferLayoutRate::Vertex);
 

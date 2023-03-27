@@ -21,8 +21,8 @@ namespace XD
     const char* xdWndInitConf_wndName = "xdWnd";
     int xdWndInitConf_defWndWidth = 640;
     int xdWndInitConf_defWndHeight = 360;
-    int xdWndInitConf_lodingWidth = 512;
-    int xdWndInitConf_lodingHeight = 288;
+    int xdWndInitConf_loadingWidth = 512;
+    int xdWndInitConf_loadingHeight = 288;
 }
 
 namespace XD::UUID

@@ -103,19 +103,12 @@ namespace XD::Render
 
         SN8,
         SN16,
-        SN32,
-        SN64,
         SF16,
         SF32,
         SF64,
 
         UN8,
         UN16,
-        UN32,
-        UN64,
-        UF16,
-        UF32,
-        UF64,
 
         SI8_2D,
         SI16_2D,
@@ -129,19 +122,12 @@ namespace XD::Render
 
         SN8_2D,
         SN16_2D,
-        SN32_2D,
-        SN64_2D,
         SF16_2D,
         SF32_2D,
         SF64_2D,
 
         UN8_2D,
         UN16_2D,
-        UN32_2D,
-        UN64_2D,
-        UF16_2D,
-        UF32_2D,
-        UF64_2D,
 
         SI8_3D,
         SI16_3D,
@@ -155,19 +141,12 @@ namespace XD::Render
 
         SN8_3D,
         SN16_3D,
-        SN32_3D,
-        SN64_3D,
         SF16_3D,
         SF32_3D,
         SF64_3D,
 
         UN8_3D,
         UN16_3D,
-        UN32_3D,
-        UN64_3D,
-        UF16_3D,
-        UF32_3D,
-        UF64_3D,
 
         SI8_4D,
         SI16_4D,
@@ -181,21 +160,18 @@ namespace XD::Render
 
         SN8_4D,
         SN16_4D,
-        SN32_4D,
-        SN64_4D,
         SF16_4D,
         SF32_4D,
         SF64_4D,
 
         UN8_4D,
         UN16_4D,
-        UN32_4D,
-        UN64_4D,
-        UF16_4D,
-        UF32_4D,
-        UF64_4D,
 
         // sRGB:
+        Srgb8,
+        Srgb8_2D,
+        Srgb8_3D,
+        Srgb8_4D,
 
         // --------------
         Num,
