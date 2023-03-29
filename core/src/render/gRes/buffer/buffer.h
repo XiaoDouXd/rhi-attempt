@@ -16,15 +16,19 @@ namespace XD::Render
         /// @brief 总大小
         virtual size_t size() const = 0;
 
+        /// @brief 设备 id
+        uuids::uuid getDevId() const { return _devId; }
+
         /// @brief 获得实现信息
         /// @return 实现信息
         const GResHolder<gResType>& getImplInfo() const;
 
     protected:
-        Buffer();
+        Buffer(const uuids::uuid& devId);
         virtual ~Buffer() = default;
 
         std::unique_ptr<GResHolderBase> _holder = nullptr;
         size_t                          _size;
+        uuids::uuid                     _devId;
     };
 } // namespace XD::Render

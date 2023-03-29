@@ -103,11 +103,11 @@ namespace XD::Render::Vk::PresMgr
             vk::PresentModeKHR::eMailbox,
             vk::PresentModeKHR::eImmediate,
         };
-        for (auto vkPrescntMode : targetVkPresentMode)
+        for (auto vkPresentMode : targetVkPresentMode)
         {
             for (size_t i = 0; i < presentModes.size(); i++)
             {
-                if (presentModes[i] == vkPrescntMode)
+                if (presentModes[i] == vkPresentMode)
                 {
                     targetPresentMode = i;
                     break;

@@ -5,19 +5,18 @@
 #include "render/gRes/buffer/indexBuffer.h"
 #include "render/gRes/gRes.h"
 #include "render/impl/vk/vkMgr.h"
-#include "vulkan/vulkan_enums.hpp"
 #include "xdBase/exce.h"
 
 namespace XD::Render
 {
-    IndexBuffer::IndexBuffer(const std::vector<uint32_t>& indices, const uuids::uuid& devId)
+    IndexBuffer::IndexBuffer(const std::vector<uint32_t>& indices, bool isDynamic, const uuids::uuid& devId)
+    : Buffer(devId), _isDynamic(isDynamic)
     {
         auto& devPtr = Vk::VkMgr::getDev(devId);
         if (!devPtr) throw Exce(__LINE__, __FILE__, "XD::IndexBuffer Error: dev not found.");
         auto& dev = devPtr.dev;
 
-        _holder = std::make_unique<GResHolder<GResType::Buffer>>();
-        auto& MemData = getResHolder<gResType>(_holder);
+        auto& holder = getResHolder<gResType>(_holder);
 
         _size = indices.size() / 3;
         vk::BufferCreateInfo bufInfo;
@@ -25,9 +24,8 @@ namespace XD::Render
                 .setUsage(vk::BufferUsageFlagBits::eIndexBuffer)
                 .setSharingMode(vk::SharingMode::eExclusive);
 
-        MemData.buf = dev.createBuffer(bufInfo);
-        vk::MemoryRequirements memReq;
-        dev.getBufferMemoryRequirements(MemData.buf, &memReq);
+        holder.buf = dev.createBuffer(bufInfo);
+        auto memReq = dev.getBufferMemoryRequirements(holder.buf);
 
         vk::MemoryAllocateInfo allocInfo;
         allocInfo   .setAllocationSize(memReq.size)
@@ -36,24 +34,25 @@ namespace XD::Render
                         vk::MemoryPropertyFlagBits::eHostVisible |
                         vk::MemoryPropertyFlagBits::eHostCoherent)
                     );
-        vk::Result err = dev.allocateMemory(&allocInfo, nullptr, &MemData.devMem);
+        vk::Result err = dev.allocateMemory(&allocInfo, nullptr, &holder.devMem);
         Vk::VkMgr::checkVkResult(err);
-        dev.bindBufferMemory(MemData.buf, MemData.devMem, 0);
+        dev.bindBufferMemory(holder.buf, holder.devMem, 0);
 
         void* data;
-        err = dev.mapMemory(MemData.devMem, 0, bufInfo.size, (vk::MemoryMapFlags)0, &data);
+        err = dev.mapMemory(holder.devMem, 0, bufInfo.size, (vk::MemoryMapFlags)0, &data);
         Vk::VkMgr::checkVkResult(err);
         memcpy(data, indices.data(), (size_t)bufInfo.size);
-        dev.unmapMemory(MemData.devMem);
+        dev.unmapMemory(holder.devMem);
     }
 
     IndexBuffer::~IndexBuffer()
     {
-        auto& memData = getResHolder<gResType>(_holder);
-        auto& dev = Vk::VkMgr::getDev().dev;
-        dev.destroyBuffer(memData.buf);
-        dev.freeMemory(memData.devMem);
-    }
+        auto& devPtr = Vk::VkMgr::getDev(_devId);
+        if (!devPtr) return;
+        auto& dev = devPtr.dev;
+        auto& holder = getResHolder<gResType>(_holder);
 
-    size_t IndexBuffer::size() const noexcept { return _size; }
+        dev.destroyBuffer(holder.buf);
+        dev.freeMemory(holder.devMem);
+    }
 } // namespace XD::Render

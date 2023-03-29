@@ -6,12 +6,38 @@
 
 namespace XD::Render
 {
+    class BufferLayoutBase : public GRes
+    {
+    public:
+        static constexpr GResType gResType = GResType::BufferLayout;
+
+    public:
+        /// @brief 创建缓冲布局
+        /// @param types 单元内部的类型 (location 为 0~types.size() 顺序排列)
+        /// @param rate 设置缓冲单元按实例输入还是按顶点输入
+        /// @param order 排序方式
+        BufferLayoutBase(
+            std::initializer_list<BufferLayoutType> types,
+            BufferLayoutRate rate = BufferLayoutRate::Vertex);
+
+        /// @brief 获得实现信息
+        /// @return 实现信息
+        const GResHolder<gResType>& getImplInfo();
+
+        /// @brief 总大小
+        size_t stride() const;
+
+    private:
+        size_t                          _stride;
+        std::unique_ptr<GResHolderBase> _holder = nullptr;
+    };
+
     template<BufferLayoutType T>
-    class BufferLayoutTypeMap { using type = void; };
+    class BufferLayoutTypeMap { public: using type = void; };
 
 #define BufferLayoutTypeMapDef(layoutType, cpuType) \
         template<> \
-        class BufferLayoutTypeMap<layoutType> { using type = cpuType; }
+        class BufferLayoutTypeMap<layoutType> { public: using type = cpuType; }
 
     BufferLayoutTypeMapDef(BufferLayoutType::SI8, glm::int8);
     BufferLayoutTypeMapDef(BufferLayoutType::SI16, glm::int16);
@@ -95,6 +121,7 @@ namespace XD::Render
     BufferLayoutTypeMapDef(BufferLayoutType::Srgb8_4D, glm::u8vec4);
 
 #undef BufferLayoutTypeMapDef
+
     template<BufferLayoutType typ>
     inline size_t constexpr getBufferLayoutTypeByte()
     {
@@ -106,39 +133,86 @@ namespace XD::Render
     template <BufferLayoutType ...layouts>
     class BufferLayout
     {
+        static_assert(sizeof...(layouts) > 0 && sizeof...(layouts) <= 16, "XD::Render BufferLayout: 布局不能为空且大小最大为 16 个");
     private:
         template<size_t i, BufferLayoutType f, BufferLayoutType ...l>
         struct LayoutAtImpl
-        { static constexpr BufferLayoutType v = LayoutAtImpl<i - 1, f, l...>::v; };
+        { static constexpr BufferLayoutType v = LayoutAtImpl<i - 1, l...>::v; };
         template<BufferLayoutType f, BufferLayoutType ...l>
         struct LayoutAtImpl <0, f, l...>
         { static constexpr BufferLayoutType v = f; };
         template<BufferLayoutType f>
         struct LayoutAtImpl <0, f>
         { static constexpr BufferLayoutType v = f; };
+        template<BufferLayoutType f, BufferLayoutType ...l>
+        struct LayoutMemSizeImpl
+        { static constexpr size_t v = sizeof(typename BufferLayoutTypeMap<f>::type) + LayoutMemSizeImpl<l...>::v; };
+        template<BufferLayoutType f>
+        struct LayoutMemSizeImpl<f>
+        { static constexpr size_t v = sizeof(typename BufferLayoutTypeMap<f>::type); };
 
-        template<BufferLayoutType...Vals>
-        static constexpr auto calcOffset(std::integer_sequence<BufferLayoutType, Vals...>)
+        template<size_t s, size_t ...ValSums, uint8_t f, uint8_t ...Vals>
+        static constexpr auto calcOffsetImpl(std::integer_sequence<size_t, ValSums...>, std::integer_sequence<uint8_t, f, Vals...>)
         {
-            std::integer_sequence<size_t, (0 + ... + sizeof(BufferLayoutTypeMap<Vals>::type))> res;
-            return res;
+            if constexpr (sizeof...(Vals))
+            {
+                return calcOffsetImpl<s + sizeof(typename BufferLayoutTypeMap<(BufferLayoutType)f>::type)>(
+                    std::integer_sequence<size_t,
+                        ValSums..., s + sizeof(typename BufferLayoutTypeMap<(BufferLayoutType)f>::type)>{},
+                    std::integer_sequence<uint8_t, Vals...>{});
+            }
+            else
+            {
+                return std::integer_sequence<size_t,
+                    ValSums..., s + sizeof(typename BufferLayoutTypeMap<(BufferLayoutType)f>::type)>{};
+            }
         }
 
-        template<BufferLayoutType...Vals>
-        static constexpr size_t memorySizeImpl(std::integer_sequence<BufferLayoutType, Vals...>)
-        {
-            return (0 + ... + sizeof(BufferLayoutTypeMap<Vals>::type));
-        }
+        template<uint8_t...Vals>
+        static constexpr uuids::uuid getUuidImpl(std::integer_sequence<uint8_t, Vals...>)
+        { return uuids::uuid(std::array<uint8_t, 16>{Vals...}); }
+
+        template<uint8_t...Vals>
+        static constexpr auto getInitListImpl(std::integer_sequence<uint8_t, Vals...>)
+        { return std::initializer_list<BufferLayoutType>{(BufferLayoutType)Vals...}; }
+
+        template<size_t i, size_t f, size_t...l>
+        struct GetOffsetImpl
+        { static constexpr size_t v = GetOffsetImpl<i - 1, l...>::v; };
+        template<size_t f, size_t ...l>
+        struct GetOffsetImpl<0, f, l...>
+        { static constexpr size_t v = f; };
+        template<size_t f>
+        struct GetOffsetImpl<0, f>
+        { static constexpr size_t v = f; };
+        template<size_t i, size_t ...l>
+        static constexpr auto getOffsetImpl(std::integer_sequence<size_t, l...>)
+        { return GetOffsetImpl<i, l...>::v; }
 
     public:
         static constexpr std::size_t size = sizeof...(layouts);
+        static constexpr std::size_t memSize = LayoutMemSizeImpl<layouts...>::v;
         using __xd_is_buffer_layout = std::true_type;
-        using __xd_format_list = std::integer_sequence<BufferLayoutType, layouts...>;
-        using __xd_offset_list = decltype(calcOffset(__xd_format_list{}));
+        using __xd_format_list = std::integer_sequence<uint8_t, (uint8_t)layouts...>;
+        using __xd_offset_list = decltype(
+            calcOffsetImpl<0>(std::integer_sequence<size_t>{}, __xd_format_list{}));
 
         template<size_t i>
         struct LayoutAt
-        { static constexpr BufferLayoutType value = LayoutAtImpl<i, layouts...>::v; };
-        static constexpr size_t memorySize() { return memorySizeImpl(__xd_format_list{}); }
+        {
+            static_assert(i < size, "XD::BufferLayout Error: 索引越界");
+            static constexpr BufferLayoutType value = LayoutAtImpl<i, layouts...>::v;
+        };
+        template<size_t i>
+        static constexpr size_t getOffset()
+        {
+            static_assert(i < size, "XD::BufferLayout Error: 索引越界");
+            if constexpr (i) return getOffsetImpl<i - 1>(__xd_offset_list{});
+            else return 0;
+        }
+        static constexpr uuids::uuid getLayoutUUID()
+        { return getUuidImpl(std::integer_sequence<uint8_t, (uint8_t)layouts...>{}); }
+        static BufferLayoutBase getLayout()
+        { return BufferLayoutBase(getInitListImpl(std::integer_sequence<uint8_t, (uint8_t)layouts...>{})); }
     };
 }

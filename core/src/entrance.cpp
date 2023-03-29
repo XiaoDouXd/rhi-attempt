@@ -88,6 +88,10 @@ namespace XD
     }
 } // namespace XD
 
+#include "render/gRes/buffer/vertexBuffer.hpp"
+
+using namespace XD::Render;
+
 // 临时的 main 函数
 int main(int argc, char** argv)
 {
@@ -95,6 +99,29 @@ int main(int argc, char** argv)
     {
         std::cout<< "测试汉字 utf-8" << std::endl;
         XD::init();
+
+        {   // 测试顶点缓冲用的块
+            Vertex<UvBufferLayout> vert;
+            Vertex<UvBufferLayout> vertRef(nullptr);
+            vert.set<0>({1, 2, 3});
+            vert.set<1>({1, 2});
+            vert.set<2>({152, 21, 55, 88});
+
+            auto pos = vert.get<0>();
+            auto uv = vert.get<1>();
+            auto col = vert.get<2>();
+
+            vertRef.bind(vert.data());
+            auto pos2 = vertRef.get<0>();
+            vertRef.set<1>({5, 6});
+            auto uv2 = vert.get<1>();
+
+            std::list<Vertex<UvBufferLayout>> vertList(10);
+            auto& vertBack = vertList.back();
+            vertBack = vert;
+            VertexBuffer<UvBufferLayout> vertBuf(vertList);
+        }
+
         bool done = false;
         while (!done) XD::update(done);
         XD::destroy();

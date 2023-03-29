@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "bufferLayoutFormat.h"
-#include "render/gRes/buffer/bufferLayout.h"
+#include "render/gRes/buffer/bufferLayout.hpp"
 #include "render/gRes/gRes.h"
 #include "vulkan/vulkan_core.h"
 #include "vulkan/vulkan_enums.hpp"

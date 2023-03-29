@@ -29,12 +29,24 @@ add_subdirectory(3rd)
 
 # ----------------------------------------------------- collect src
 
-file(GLOB_RECURSE ALL_SOURCE "core/src/*.cpp" "core/src/*.c" "core/src/*.h" "core/src/*.hpp" "core/include/*.h" "core/include/*.hpp")
+file(GLOB_RECURSE ALL_IMPL "core/src/*.ixx" "core/src/*.cxx")
+file(GLOB_RECURSE ALL_TEMPLATE_INST "core/src/*.tpp")
+set_source_files_properties(${ALL_IMPL} PROPERTIES LANGUAGE CXX)
+
+file(GLOB_RECURSE ALL_SOURCE
+    "core/src/*.cpp"
+    "core/src/*.c"
+    "core/src/*.h"
+    "core/src/*.hpp"
+    "core/src/*.hxx"
+    "core/include/*.h"
+    "core/include/*.hpp")
 
 include_directories(${PROJECT_NAME} ./core/include ./core/src ./3rd/stduuid/include)
-# target_include_directories(${PROJECT_NAME} PUBLIC ./core/include ./3rd/stduuid)
+add_executable(${PROJECT_NAME} ${ALL_SOURCE} ${ALL_IMPL} ${ALL_TEMPLATE_INST})
+# add_library(${PROJECT_NAME} STATIC ${ALL_SOURCE} ${ALL_IMPL} ${ALL_TEMPLATE_INST})
+# target_include_directories(${PROJECT_NAME} PUBLIC ./core/include ./3rd/stduuid/include)
 # target_include_directories(${PROJECT_NAME} PRIVATE ./core/src)
-add_executable(${PROJECT_NAME} ${ALL_SOURCE})
 
 message(STATUS "\n-- " ${PROJECT_NAME} ":: # ----------------------------------------------------- build conf\n--")
 

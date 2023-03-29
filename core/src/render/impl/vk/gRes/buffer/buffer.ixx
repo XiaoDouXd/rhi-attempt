@@ -7,8 +7,9 @@
 
 namespace XD::Render
 {
-    Buffer::Buffer()
+    Buffer::Buffer(const uuids::uuid& devId)
     {
+        _devId = devId;
         _holder = std::make_unique<GResHolder<gResType>>();
     }
 
