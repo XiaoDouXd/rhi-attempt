@@ -7,7 +7,7 @@
 
 namespace XD::Render
 {
-    class IndexBuffer : public Buffer
+    class IndexBuffer final : public Buffer
     {
     public:
         IndexBuffer(const std::vector<uint32_t>& indices, bool isDynamic = false, const uuids::uuid& devId = uuids::uuid());

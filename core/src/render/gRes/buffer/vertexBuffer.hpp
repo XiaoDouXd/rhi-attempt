@@ -33,7 +33,7 @@ namespace XD::Render
 
     template<typename layout>
     requires layout::__xd_is_buffer_layout::value
-    class Vertex
+    class Vertex final
     {
     private:
         template<size_t i>
@@ -46,6 +46,7 @@ namespace XD::Render
 
     public:
         Vertex(const std::vector<uint8_t>::iterator& itr) : _data(itr, itr + memSize) {}
+        Vertex(const std::span<uint8_t>& data) : _data(data) {}
         Vertex(uint8_t* data) : _data(data, data ? memSize : 0) {}
         Vertex() : _data(new uint8_t[memSize](), memSize), _isSelfHold(true) {}
         Vertex(Vertex&& o) : _data(o._data), _isSelfHold(o._isSelfHold) { o._data = std::span<uint8_t>(); }
@@ -61,6 +62,7 @@ namespace XD::Render
             {
                 delete[] _data.data();
                 _data = o._data;
+                _isSelfHold = o._isSelfHold;
                 o._data = std::span<uint8_t>();
             }
             else for (size_t i = 0; i < memSize; i++) _data[i] = o._data[i];
@@ -125,7 +127,7 @@ namespace XD::Render
 
     template<typename layout>
     requires layout::__xd_is_buffer_layout::value
-    class VertexBuffer : public VertexBufferBase
+    class VertexBuffer final : public VertexBufferBase
     {
     public:
         using bufferLayout = layout;

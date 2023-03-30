@@ -33,11 +33,11 @@ namespace XD::Render
     };
 
     template<BufferLayoutType T>
-    class BufferLayoutTypeMap { public: using type = void; };
+    class BufferLayoutTypeMap final { public: using type = void; };
 
 #define BufferLayoutTypeMapDef(layoutType, cpuType) \
         template<> \
-        class BufferLayoutTypeMap<layoutType> { public: using type = cpuType; }
+        class BufferLayoutTypeMap<layoutType> final { public: using type = cpuType; }
 
     BufferLayoutTypeMapDef(BufferLayoutType::SI8, glm::int8);
     BufferLayoutTypeMapDef(BufferLayoutType::SI16, glm::int16);
@@ -131,7 +131,7 @@ namespace XD::Render
     }
 
     template <BufferLayoutType ...layouts>
-    class BufferLayout
+    class BufferLayout final
     {
         static_assert(sizeof...(layouts) > 0 && sizeof...(layouts) <= 16, "XD::Render BufferLayout: 布局不能为空且大小最大为 16 个");
     private:
