@@ -1,3 +1,4 @@
+#define XD_VK_IMPL
 
 #include <iostream>
 #include <memory>
@@ -5,14 +6,11 @@
 #include <stdint.h>
 #include <vector>
 
-#include "uuid.h"
-#include "xdBase/exce.h"
-#include "xdBase/uuidGen.h"
-
-#include "app/appMgr.h"
-#include "app/event/staticEventMgr.hpp"
-#include "app/util/timeMgr.h"
-#include "render/renderMgr.h"
+#include "app/public/appMgr.h"
+#include "app/public/event/staticEventMgr.hpp"
+#include "app/public/util/timeMgr.h"
+#include "render/public/renderMgr.h"
+#include "util/public/exce.h"
 
 namespace XD
 {
@@ -24,24 +22,6 @@ namespace XD
     int xdWndInitConf_loadingWidth = 512;
     int xdWndInitConf_loadingHeight = 288;
 }
-
-namespace XD::UUID
-{
-    uuids::uuid gen()
-    {
-        static std::unique_ptr<uuids::uuid_random_generator> generator = nullptr;
-        if (!generator)
-        {
-            std::random_device rd;
-            auto seed_data = std::array<int, std::mt19937::state_size> {};
-            std::generate(std::begin(seed_data), std::end(seed_data), std::ref(rd));
-            std::seed_seq seq(std::begin(seed_data), std::end(seed_data));
-            std::mt19937 engine(seq);
-            generator = std::make_unique<uuids::uuid_random_generator>(&engine);
-        }
-        return generator->operator()();
-    }
-} // namespace XD
 
 namespace XD
 {
@@ -88,7 +68,7 @@ namespace XD
     }
 } // namespace XD
 
-#include "render/gRes/buffer/vertexBuffer.hpp"
+#include "render/public/gRes/buffer/vertexBuffer.hpp"
 
 using namespace XD::Render;
 

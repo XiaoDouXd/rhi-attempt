@@ -29,7 +29,11 @@ add_subdirectory(3rd)
 
 # ----------------------------------------------------- collect src
 
-file(GLOB_RECURSE ALL_IMPL "core/src/*.ixx" "core/src/*.cxx")
+if (NOT DEFINED XD_RENDER_IMPL)
+    set(XD_RENDER_IMPL "vk")
+endif()
+
+file(GLOB_RECURSE ALL_IMPL "core/src/*.ixx" "core/src/*.cxx" "core/renderImpl/${XD_RENDER_IMPL}/*.ixx" "core/renderImpl/${XD_RENDER_IMPL}/*.cxx")
 file(GLOB_RECURSE ALL_TEMPLATE_INST "core/src/*.tpp")
 set_source_files_properties(${ALL_IMPL} PROPERTIES LANGUAGE CXX)
 
@@ -39,14 +43,21 @@ file(GLOB_RECURSE ALL_SOURCE
     "core/src/*.h"
     "core/src/*.hpp"
     "core/src/*.hxx"
-    "core/include/*.h"
-    "core/include/*.hpp")
+    "core/renderImpl/${XD_RENDER_IMPL}/*.cpp"
+    "core/renderImpl/${XD_RENDER_IMPL}/*.c"
+    "core/renderImpl/${XD_RENDER_IMPL}/*.h"
+    "core/renderImpl/${XD_RENDER_IMPL}/*.hpp"
+    "core/renderImpl/${XD_RENDER_IMPL}/*.hxx")
 
-include_directories(${PROJECT_NAME} ./core/include ./core/src ./3rd/stduuid/include)
+include_directories(
+    "${CMAKE_SOURCE_DIR}/core/src"
+    "${CMAKE_SOURCE_DIR}/core/renderImpl"
+    "${CMAKE_SOURCE_DIR}/3rd/stduuid/include"
+)
 add_executable(${PROJECT_NAME} ${ALL_SOURCE} ${ALL_IMPL} ${ALL_TEMPLATE_INST})
 # add_library(${PROJECT_NAME} STATIC ${ALL_SOURCE} ${ALL_IMPL} ${ALL_TEMPLATE_INST})
-# target_include_directories(${PROJECT_NAME} PUBLIC ./core/include ./3rd/stduuid/include)
-# target_include_directories(${PROJECT_NAME} PRIVATE ./core/src)
+# target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/core/src" "${CMAKE_SOURCE_DIR}/3rd/stduuid/include")
+# target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/core/renderImpl")
 
 message(STATUS "\n-- " ${PROJECT_NAME} ":: # ----------------------------------------------------- build conf\n--")
 
