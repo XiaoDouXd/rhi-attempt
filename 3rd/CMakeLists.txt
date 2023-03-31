@@ -10,5 +10,4 @@ set(SDL3IMAGE_BUILD_SHARED_LIBS OFF)
 
 add_subdirectory(SDL3)
 add_subdirectory(SDL3_image)
-add_subdirectory(stduuid)
 add_subdirectory(glm)

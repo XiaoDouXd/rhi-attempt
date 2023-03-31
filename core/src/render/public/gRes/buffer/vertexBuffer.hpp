@@ -166,6 +166,6 @@ namespace XD::Render
 #endif
 
 #define XD__TEMPLATE_HXX
-#include "vertexBuffer.hxx"
+#include "render/private/gRes/buffer/vertexBuffer.hxx"
 #undef XD__TEMPLATE_HXX
 #undef XD__TEMPLATE_EXTERN

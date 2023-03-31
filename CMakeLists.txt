@@ -53,10 +53,11 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/core/src"
     "${CMAKE_SOURCE_DIR}/core/renderImpl"
     "${CMAKE_SOURCE_DIR}/3rd/stduuid/include"
+    "${CMAKE_SOURCE_DIR}/3rd/mio/single_include"
 )
 add_executable(${PROJECT_NAME} ${ALL_SOURCE} ${ALL_IMPL} ${ALL_TEMPLATE_INST})
 # add_library(${PROJECT_NAME} STATIC ${ALL_SOURCE} ${ALL_IMPL} ${ALL_TEMPLATE_INST})
-# target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/core/src" "${CMAKE_SOURCE_DIR}/3rd/stduuid/include")
+# target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_SOURCE_DIR}/core/src" "${CMAKE_SOURCE_DIR}/3rd/stduuid/include" "${CMAKE_SOURCE_DIR}/3rd/mio/single_include")
 # target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/core/renderImpl")
 
 message(STATUS "\n-- " ${PROJECT_NAME} ":: # ----------------------------------------------------- build conf\n--")
@@ -126,6 +127,14 @@ message(STATUS ${PROJECT_NAME} "::CMakeLists::info: include SDL3 from \"3rd/SDL3
 # 添加 assimp
 find_package(assimp CONFIG REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE assimp::assimp)
+
+# 添加 rapidJson
+find_package(RapidJSON CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE rapidjson)
+
+# 添加 lz4
+find_package(lz4 CONFIG REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE lz4::lz4)
 
 # 添加 glm
 # 链接 glm

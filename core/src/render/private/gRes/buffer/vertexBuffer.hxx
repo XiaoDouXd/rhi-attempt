@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef XD__TEMPLATE_HXX
-#include "vertexBuffer.hpp" // 这个只是为了保证语法提示的准确性...
+#include "render/public/gRes/buffer/vertexBuffer.hpp"   // 这个只是为了保证语法提示的准确性...
 #endif
 
 #ifndef XD__TEMPLATE_EXTERN
