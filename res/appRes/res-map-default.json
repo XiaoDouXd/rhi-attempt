@@ -1,0 +1,27 @@
+{
+    "isCoverage" : true,    // 是否强制覆盖已经载入的结构
+    "packs" :
+    [
+        {
+            "id" : "c91fc61f-bd85-4da1-9fc5-4ade5daaf571",
+            "name" : "asset e.g.",          // name
+            "algorithm" : "lz4",            //
+            "path" : "./bundle.asset",
+            "tag" : ["local"],
+            "version" : 0,
+            "content" :
+            [
+                {
+                    "id" : "fd740e5e-d025-497c-bdfb-255b991f73cf",  // uuid
+                    "dependency" : [ "13b11e58-9129-49f9-8060-7eb88bbb48bb" ],
+                    "name" : "test tex",                            // any string
+                    "type" : "Mesh",                                // class typename
+                    "tag" : [],                                     // strings
+                    "size" : 1024,                                  // number
+                    "version" : 0                                   // number
+                },
+                { "id" : "13b11e58-9129-49f9-8060-7eb88bbb48bb", "size" : 256 }
+            ]
+        }
+    ]
+}

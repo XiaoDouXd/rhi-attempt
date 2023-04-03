@@ -16,11 +16,15 @@ namespace XD
 {
     const uint8_t* xdWndInitConf_iconPngData = nullptr;
     size_t xdWndInitConf_iconPngSize = 0;
+
     const char* xdWndInitConf_wndName = "xdWnd";
     int xdWndInitConf_defWndWidth = 640;
     int xdWndInitConf_defWndHeight = 360;
     int xdWndInitConf_loadingWidth = 512;
     int xdWndInitConf_loadingHeight = 288;
+
+    const std::u8string xdAssetInitConf_rootResMapPath = u8"./appRes/res-map-default.json";
+    const std::locale defaultLocale = std::locale();
 }
 
 namespace XD

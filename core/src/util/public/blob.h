@@ -11,6 +11,7 @@ namespace XD
     class Blob final
     {
     public:
+        Blob() {}
         Blob(const char* path)
         {
             std::ifstream f(path, std::ios::binary | std::ios::ate);
@@ -21,21 +22,32 @@ namespace XD
             if (!f.read(reinterpret_cast<char*>(_data), _size))
             { delete [] _data; _data = nullptr; _size = 0; }
         }
-        Blob(size_t size) : _data(new uint8_t[size]), _size(size) {}
-        Blob(Blob&& o) : _data(o._data), _size(o._size) { o._data = nullptr; }
-        Blob(const Blob& o) : _data(new uint8_t[o._size]), _size(o._size)
-        { memcpy_s(_data, _size, o._data, o._size); }
-        Blob(std::tuple<uint8_t*, size_t> data)
-        : _data(std::get<0>(data)), _size(std::get<1>(data)) {}
+        Blob(size_t size) : _data(size ? new uint8_t[size] : nullptr), _size(size) {}
+        Blob(Blob&& o) : _data(o._data), _size(o._size) { o._data = nullptr; o._size = 0; }
+        Blob(const Blob& o) : _data(o._data ? new uint8_t[o._size] : 0), _size(o._size)
+        { if (_size) memcpy(_data, o._data, o._size); }
         ~Blob() { delete [] _data; _data = nullptr; }
 
         const Blob& operator=(Blob&& o)
-        { delete [] _data; _data = o._data; _size = o._size; o._data = nullptr; return *this; }
+        {
+            delete [] _data;
+            _data = o._data;
+            _size = o._size;
+            o._data = nullptr;
+            o._size = 0;
+            return *this;
+        }
+
         const Blob& operator=(const Blob& o)
         {
-            if (o._size != _size) { delete [] _data; _data = new uint8_t[o._size]; }
+            if (o._size != _size)
+            {
+                delete [] _data;
+                if (!o._data) { _size = 0; _data = nullptr; return *this; }
+                _data = new uint8_t[o._size];
+            }
             _size = o._size;
-            memcpy_s(_data, _size, o._data, o._size);
+            memcpy(_data, o._data, o._size);
             return *this;
         }
 
@@ -52,14 +64,16 @@ namespace XD
             o._size = _size;
             _size = tmpS;
         }
+
         void swap(std::tuple<uint8_t*, size_t>& data)
         {
             auto tmpD = _data;
             _data = std::get<0>(data);
-            auto tmpS = _size;;
+            auto tmpS = _size;
             _size = std::get<1>(data);
             data = {tmpD, tmpS};
         }
+
         std::tuple<uint8_t*, size_t> move()
         {
             auto data = std::tuple<uint8_t*, size_t>{_data, _size};
@@ -67,6 +81,7 @@ namespace XD
             _size = 0;
             return data;
         }
+
         operator bool() { return (bool)_data; }
 
     private:
