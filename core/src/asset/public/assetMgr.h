@@ -8,6 +8,9 @@
 namespace XD::Asset::Mgr
 {
     void init();
+    void update();
+    void destroy();
+
     void add();
-    std::weak_ptr<Asset> get(const uuids::uuid& assetId);
+    const Asset& get(const uuids::uuid& assetId);
 }

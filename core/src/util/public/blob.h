@@ -22,6 +22,7 @@ namespace XD
             if (!f.read(reinterpret_cast<char*>(_data), _size))
             { delete [] _data; _data = nullptr; _size = 0; }
         }
+        Blob(uint8_t* data, size_t size): _data(data), _size(size) {}
         Blob(size_t size) : _data(size ? new uint8_t[size] : nullptr), _size(size) {}
         Blob(Blob&& o) : _data(o._data), _size(o._size) { o._data = nullptr; o._size = 0; }
         Blob(const Blob& o) : _data(o._data ? new uint8_t[o._size] : 0), _size(o._size)

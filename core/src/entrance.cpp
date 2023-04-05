@@ -23,7 +23,7 @@ namespace XD
     int xdWndInitConf_loadingWidth = 512;
     int xdWndInitConf_loadingHeight = 288;
 
-    const std::u8string xdAssetInitConf_rootResMapPath = u8"./appRes/res-map-default.json";
+    std::u8string xdAssetInitConf_rootResMapPath = u8"./appRes/res-map-default.json";
     const std::locale defaultLocale = std::locale();
 }
 
