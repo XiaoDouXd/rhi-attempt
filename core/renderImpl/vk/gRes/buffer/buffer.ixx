@@ -5,6 +5,9 @@
 #include "render/public/gRes/gRes.h"
 #include "vk/vkMgr.h"
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+
 namespace XD::Render
 {
     Buffer::Buffer(const uuids::uuid& devId)
@@ -18,3 +21,4 @@ namespace XD::Render
         return getResHolder<gResType>(_holder);
     }
 }
+#pragma clang diagnostic pop

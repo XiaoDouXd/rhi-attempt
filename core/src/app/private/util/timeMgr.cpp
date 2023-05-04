@@ -4,6 +4,10 @@
 #include <list>
 #include <memory>
 #include <queue>
+#include <utility>
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 namespace XD::Util::TimeMgr
 {
@@ -13,7 +17,7 @@ namespace XD::Util::TimeMgr
         clock_t                 endTime;
         std::function<void()>   cb;
         TimeCallback(std::function<void()> cb, double endTime) :
-        endTime(endTime), cb(cb) {}
+        endTime((clock_t)endTime), cb(std::move(cb)) {}
     };
     class TimeCallbackCompare
     {
@@ -33,7 +37,7 @@ namespace XD::Util::TimeMgr
     };
     static std::unique_ptr<Data> _inst = nullptr;
 
-    void init()
+    [[maybe_unused]] void init()
     {
         if (_inst) return;
         _inst = std::make_unique<Data>();
@@ -51,10 +55,10 @@ namespace XD::Util::TimeMgr
         return std::chrono::high_resolution_clock::now();
     }
 
-    void delay(std::function<void()> cb, clock_t delay)
+    void delay(const std::function<void()>& cb, clock_t delay)
     {
         if (_inst->callbacks.empty()) return;
-        _inst->callbacks.push(TimeCallback(cb, delay + now()));
+        _inst->callbacks.emplace(cb, delay + now());
     }
 
     void update()
@@ -77,3 +81,5 @@ namespace XD::Util::TimeMgr
         _inst.reset();
     }
 } // namespace XD::Util::TimeMgr
+
+#pragma clang diagnostic pop

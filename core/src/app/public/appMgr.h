@@ -38,7 +38,7 @@ namespace XD::AppMgr
     /// @brief 刷新帧
     /// @param quit 是否退出
     /// @param checkPlatformSpecialEvent 是否检查平台特殊事件
-    void update(bool& quit, bool checkPlatformSpecialEvent);
+    void update(bool& quit, [[maybe_unused]] bool checkPlatformSpecialEvent);
 
     /// @brief 销毁
     void destroy();

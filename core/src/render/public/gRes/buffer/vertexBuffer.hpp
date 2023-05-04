@@ -4,10 +4,18 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
+#include <list>
 
 #include "render/public/gRes/buffer/buffer.h"
 #include "render/public/gRes/buffer/bufferLayout.hpp"
 #include "render/public/gRes/gRes.h"
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedTypeAliasInspection"
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedParameter"
 
 namespace XD::Render
 {
@@ -17,22 +25,22 @@ namespace XD::Render
         VertexBufferBase(const std::vector<uint8_t>& data, bool isDynamic, const uuids::uuid& devId = uuids::uuid());
         VertexBufferBase(const std::span<uint8_t>& data, bool isDynamic, const uuids::uuid& devId = uuids::uuid());
         VertexBufferBase(const uint8_t* data, size_t size, bool isDynamic, const uuids::uuid& devId = uuids::uuid());
-        ~VertexBufferBase();
+        ~VertexBufferBase() override;
 
         bool update(const std::vector<uint8_t>& data);
         bool update(const std::span<uint8_t>& data);
         bool update(const uint8_t* data, size_t size);
 
         /// @brief 总大小
-        size_t size() const noexcept override { return _size; }
-        bool isDynamic() const noexcept { return _isDynamic; }
+        [[nodiscard]] size_t size() const noexcept override { return _size; }
+        [[nodiscard]] bool isDynamic() const noexcept { return _isDynamic; }
 
     private:
         bool _isDynamic;
     };
 
     template<typename layout>
-    requires layout::__xd_is_buffer_layout::value
+    requires layout::_xd_is_buffer_layout::value
     class Vertex final
     {
     private:
@@ -45,18 +53,18 @@ namespace XD::Render
         static constexpr std::size_t memSize = layout::memSize;
 
     public:
-        Vertex(const std::vector<uint8_t>::iterator& itr) : _data(itr, itr + memSize) {}
-        Vertex(const std::span<uint8_t>& data) : _data(data) {}
-        Vertex(uint8_t* data) : _data(data, data ? memSize : 0) {}
+        explicit Vertex(const std::vector<uint8_t>::iterator& itr) : _data(itr, itr + memSize) {}
+        explicit Vertex(const std::span<uint8_t>& data) : _data(data) {}
+        explicit Vertex(uint8_t* data) : _data(data, data ? memSize : 0) {}
         Vertex() : _data(new uint8_t[memSize](), memSize), _isSelfHold(true) {}
-        Vertex(Vertex&& o) : _data(o._data), _isSelfHold(o._isSelfHold) { o._data = std::span<uint8_t>(); }
+        Vertex(Vertex&& o)  noexcept : _data(o._data), _isSelfHold(o._isSelfHold) { o._data = std::span<uint8_t>(); }
         Vertex(const Vertex& o) : _data(new uint8_t[memSize](), memSize), _isSelfHold(true)
         { for (size_t i = 0; i < memSize; i++) _data[i] = o._data[i]; }
         ~Vertex() { if (!_isSelfHold) return; delete[] _data.data(); }
 
-        const Vertex& operator=(const Vertex& o)
+        Vertex& operator=(const Vertex& o)
         { for (size_t i = 0; i < memSize; i++) _data[i] = o._data[i]; return *this; }
-        const Vertex& operator=(Vertex&& o)
+        Vertex& operator=(Vertex&& o) noexcept
         {
             if (_isSelfHold)
             {
@@ -68,7 +76,7 @@ namespace XD::Render
             else for (size_t i = 0; i < memSize; i++) _data[i] = o._data[i];
             return *this;
         }
-        operator bool() const
+        operator bool() const // NOLINT(google-explicit-constructor)
         { return _data.empty(); }
 
         template<size_t i>
@@ -117,8 +125,8 @@ namespace XD::Render
             _data = std::span<uint8_t>();
         }
 
-        const std::span<uint8_t>& data() const { return _data; }
-        const bool isNil() const { return _data.empty(); }
+        [[nodiscard]] const std::span<uint8_t>& data() const { return _data; }
+        [[nodiscard]] bool isNil() const { return _data.empty(); }
 
     private:
         std::span<uint8_t> _data;
@@ -126,23 +134,23 @@ namespace XD::Render
     };
 
     template<typename layout>
-    requires layout::__xd_is_buffer_layout::value
+    requires layout::_xd_is_buffer_layout::value
     class VertexBuffer final : public VertexBufferBase
     {
     public:
         using bufferLayout = layout;
-        VertexBuffer(const std::vector<Vertex<layout>>& data, bool isDynamic = false, const uuids::uuid& devId = uuids::uuid())
+        explicit VertexBuffer(const std::vector<Vertex<layout>>& data, bool isDynamic = false, const uuids::uuid& devId = uuids::uuid())
         : VertexBufferBase(toData(data), isDynamic){}
-        VertexBuffer(const std::list<Vertex<layout>>& data, bool isDynamic = false, const uuids::uuid& devId = uuids::uuid())
+        explicit VertexBuffer(const std::list<Vertex<layout>>& data, bool isDynamic = false, const uuids::uuid& devId = uuids::uuid())
         : VertexBufferBase(toData(data), isDynamic){}
-        VertexBuffer(const std::span<Vertex<layout>>& data, bool isDynamic = false, const uuids::uuid& devId = uuids::uuid())
+        explicit VertexBuffer(const std::span<Vertex<layout>>& data, bool isDynamic = false, const uuids::uuid& devId = uuids::uuid())
         : VertexBufferBase(toData(data), isDynamic){}
 
-        VertexBuffer(const std::vector<uint8_t>& data, bool isDynamic = false, const uuids::uuid& devId = uuids::uuid())
+        explicit VertexBuffer(const std::vector<uint8_t>& data, bool isDynamic = false, const uuids::uuid& devId = uuids::uuid())
         : VertexBufferBase(data, isDynamic) {}
-        VertexBuffer(const std::span<uint8_t>& data, bool isDynamic = false, const uuids::uuid& devId = uuids::uuid())
+        explicit VertexBuffer(const std::span<uint8_t>& data, bool isDynamic = false, const uuids::uuid& devId = uuids::uuid())
         : VertexBufferBase(data, isDynamic) {}
-        VertexBuffer(uint8_t* data, size_t size, bool isDynamic = false, const uuids::uuid& devId = uuids::uuid())
+        VertexBuffer(const uint8_t* data, size_t size, bool isDynamic = false, const uuids::uuid& devId = uuids::uuid())
         : VertexBufferBase(data, size, isDynamic) {}
 
     private:
@@ -160,12 +168,15 @@ namespace XD::Render
 
 /// 显示实例化
 #ifndef XD__TEMPLATE_INSTANTIATIONS
-#define XD__TEMPLATE_EXTERN extern
+#define XD__TEMPLATE_EXTERN extern // NOLINT(bugprone-reserved-identifier)
 #else
-#define XD__TEMPLATE_EXTERN
+#define XD__TEMPLATE_EXTERN // NOLINT(bugprone-reserved-identifier)
 #endif
 
-#define XD__TEMPLATE_HXX
+#define XD__TEMPLATE_HXX // NOLINT(bugprone-reserved-identifier)
 #include "render/private/gRes/buffer/vertexBuffer.hxx"
 #undef XD__TEMPLATE_HXX
 #undef XD__TEMPLATE_EXTERN
+#pragma clang diagnostic pop
+#pragma clang diagnostic pop
+#pragma clang diagnostic pop

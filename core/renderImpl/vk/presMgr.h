@@ -3,6 +3,9 @@
 #include <list>
 #include <vulkan/vulkan.hpp>
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+
 namespace XD::Render::Vk { class Semaphore; }
 
 namespace XD::Render::Vk::PresMgr
@@ -40,18 +43,21 @@ namespace XD::Render::Vk
     {
         friend Semaphore PresMgr::requestSemaphore();
     public:
-        constexpr operator vk::Semaphore() const { return *_itr; }
-        constexpr std::strong_ordering operator<=>(const Semaphore& o) const { return (*_itr)<=>(*o._itr); }
-        Semaphore& operator=(Semaphore&& o) { _itr = std::move(o._itr); return *this; }
-        Semaphore(Semaphore && o) { _itr = std::move(o._itr); }
-        constexpr operator bool() const;
+        operator vk::Semaphore() const { return *_itr; } // NOLINT(google-explicit-constructor)
+        std::strong_ordering operator<=>(const Semaphore& o) const { return (*_itr)<=>(*o._itr); }
+        Semaphore& operator=(Semaphore&& o) noexcept { _itr = o._itr; return *this; }
+        Semaphore(Semaphore && o) noexcept { _itr = o._itr; }
+        operator bool() const; // NOLINT(google-explicit-constructor)
         void del();
         void set(const uint64_t& val = 0);
 
-    private:
-        Semaphore() = default;
         Semaphore(const Semaphore&) = delete;
         Semaphore& operator=(const Semaphore&) = delete;
+
+    private:
+        Semaphore() = default;
         std::list<vk::Semaphore>::const_iterator _itr;
     };
 }
+
+#pragma clang diagnostic pop

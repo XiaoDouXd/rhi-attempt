@@ -8,7 +8,7 @@
 namespace XD::Asset::Mgr
 {
     void init();
-    void update();
+    // todo void update();
     void destroy();
 
     void add();

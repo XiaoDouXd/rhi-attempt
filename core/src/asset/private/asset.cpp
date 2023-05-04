@@ -1,4 +1,5 @@
 #include <chrono>
+#include <future>
 #include <thread>
 
 #include "asset/public/asset.h"
@@ -42,7 +43,7 @@ namespace XD::Asset
             {
                 try
                 {
-                    uint8_t* dst = new uint8_t[info->size];
+                    auto* dst = new uint8_t[info->size];
                     mio::ummap_source map{info->pack->path.string()};
                     const uint8_t* beginPtr = map.begin() + info->offset;
                     memcpy(dst, beginPtr, info->size);
@@ -76,7 +77,7 @@ namespace XD::Asset
         _startLoadingTime = std::chrono::high_resolution_clock::now();
     }
 
-    void Asset::load(std::function<void(std::weak_ptr<Blob>)> cb) const noexcept
+    void Asset::load(const std::function<void(std::weak_ptr<Blob>)>& cb) const noexcept
     {
         if (_state == LoadState::Loaded)
         {
@@ -89,7 +90,7 @@ namespace XD::Asset
         }
     }
 
-    std::weak_ptr<Blob> Asset::loadSync() const
+    [[maybe_unused]] std::weak_ptr<Blob> Asset::loadSync() const
     {
         if (_state == LoadState::Loaded)
         {
@@ -106,7 +107,7 @@ namespace XD::Asset
 
         if (std::filesystem::exists(info->pack->path))
         {
-            uint8_t* dst = new uint8_t[info->size];
+            auto* dst = new uint8_t[info->size];
             mio::ummap_source map{info->pack->path.string()};
             const uint8_t* beginPtr = map.begin() + info->offset;
             memcpy(dst, beginPtr, info->size);
@@ -117,7 +118,7 @@ namespace XD::Asset
         return _data;
     }
 
-    void Asset::unload() const noexcept
+    [[maybe_unused]] void Asset::unload() const noexcept
     {
         if (_state != LoadState::UnLoaded) return;
         if (!_selfLoaded) return;
@@ -138,6 +139,8 @@ namespace XD::Asset
         if (!info->refCount && !_selfLoaded) { _data.reset(); }
     }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "misc-no-recursion"
     void Asset::loadAsDependency(std::set<uuids::uuid>& load, size_t& loadingCount) const
     {
         auto info = Mgr::getInfo(_assetId);
@@ -187,7 +190,7 @@ namespace XD::Asset
             {
                 try
                 {
-                    uint8_t* dst = new uint8_t[info->size];
+                    auto* dst = new uint8_t[info->size];
                     mio::ummap_source map{info->pack->path.string()};
                     const uint8_t* beginPtr = map.begin() + info->offset;
                     memcpy(dst, beginPtr, info->size);
@@ -203,6 +206,7 @@ namespace XD::Asset
         info->asyncHandle = std::make_unique<Mgr::AssetAsyncInfo>(std::move(fut), LoadFlagBits::Dependency);
         _startLoadingTime = std::chrono::high_resolution_clock::now();
     }
+#pragma clang diagnostic pop
 
     void Asset::onLoadFinish()
     {
@@ -235,6 +239,8 @@ namespace XD::Asset
         _loadAsDependencyFailureCB.clear();
     }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "misc-no-recursion"
     void Asset::unloadAsDependency(std::set<uuids::uuid>& unload) const
     {
         auto info = Mgr::getInfo(_assetId);
@@ -251,4 +257,5 @@ namespace XD::Asset
         }
         if (!info->refCount && !_selfLoaded) { _data.reset(); }
     }
+#pragma clang diagnostic pop
 }

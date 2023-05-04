@@ -1,5 +1,4 @@
-#include <memory>
-#include <stdint.h>
+#include <cstdint>
 
 #include "bufferResHolder.hpp"
 #include "render/public/gRes/buffer/indexBuffer.h"

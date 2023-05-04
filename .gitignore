@@ -130,3 +130,4 @@ CTestTestfile.cmake
 [bB]uild/
 vcpkg.json
 .cache/
+.idea/

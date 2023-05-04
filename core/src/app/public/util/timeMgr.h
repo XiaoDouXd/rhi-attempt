@@ -20,12 +20,12 @@ namespace XD::Util::TimeMgr
 
     /// @brief 当前时间点
     /// @return 当前时间点
-    std::chrono::high_resolution_clock::time_point nowTimePoint();
+    [[maybe_unused]] std::chrono::high_resolution_clock::time_point nowTimePoint();
 
     /// @brief 延迟回调
     /// @param cb 回调
     /// @param delay 延迟(ms)
-    void delay(std::function<void()> cb, clock_t delay);
+    void delay(const std::function<void()>& cb, clock_t delay);
 
     /// @brief 更新事件
     void update();

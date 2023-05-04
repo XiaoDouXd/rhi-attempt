@@ -383,7 +383,7 @@ namespace XD::Render::Vk
         dev.signalSemaphore(info);
     }
 
-    constexpr Semaphore::operator bool() const
+    Semaphore::operator bool() const
     {
         return _itr != PresMgr::_inst->renderSemaphores.cend();
     }

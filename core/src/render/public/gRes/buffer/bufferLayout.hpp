@@ -4,6 +4,9 @@
 
 #include "render/public/gRes/gRes.h"
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedTypeAliasInspection"
+
 namespace XD::Render
 {
     class BufferLayoutBase : public GRes
@@ -25,7 +28,7 @@ namespace XD::Render
         const GResHolder<gResType>& getImplInfo();
 
         /// @brief 总大小
-        size_t stride() const;
+        [[nodiscard]] size_t stride() const;
 
     private:
         size_t                          _stride;
@@ -192,10 +195,10 @@ namespace XD::Render
     public:
         static constexpr std::size_t size = sizeof...(layouts);
         static constexpr std::size_t memSize = LayoutMemSizeImpl<layouts...>::v;
-        using __xd_is_buffer_layout = std::true_type;
-        using __xd_format_list = std::integer_sequence<uint8_t, (uint8_t)layouts...>;
-        using __xd_offset_list = decltype(
-            calcOffsetImpl<0>(std::integer_sequence<size_t>{}, __xd_format_list{}));
+        using _xd_is_buffer_layout = std::true_type;
+        using _xd_format_list = std::integer_sequence<uint8_t, (uint8_t)layouts...>;
+        using _xd_offset_list = decltype(
+            calcOffsetImpl<0>(std::integer_sequence<size_t>{}, _xd_format_list{}));
 
         template<size_t i>
         struct LayoutAt
@@ -207,7 +210,7 @@ namespace XD::Render
         static constexpr size_t getOffset()
         {
             static_assert(i < size, "XD::BufferLayout Error: 索引越界");
-            if constexpr (i) return getOffsetImpl<i - 1>(__xd_offset_list{});
+            if constexpr (i) return getOffsetImpl<i - 1>(_xd_offset_list{});
             else return 0;
         }
         static constexpr uuids::uuid getLayoutUUID()
@@ -216,3 +219,4 @@ namespace XD::Render
         { return BufferLayoutBase(getInitListImpl(std::integer_sequence<uint8_t, (uint8_t)layouts...>{})); }
     };
 }
+#pragma clang diagnostic pop

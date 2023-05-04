@@ -24,7 +24,7 @@ namespace XD::Event
         }
     }
 
-    void StaticEventMgr::unregisterEvent(const std::size_t& hashCode, uuids::uuid obj)
+    [[maybe_unused]] void StaticEventMgr::unregisterEvent(const std::size_t& hashCode, uuids::uuid obj)
     {
         auto& eDic = _inst->staticEvents;
         if (eDic.find(hashCode) == eDic.end()) return;
@@ -41,7 +41,7 @@ namespace XD::Event
         lDic.erase(eH);
     }
 
-    void StaticEventMgr::unregisterEvent(const std::optional<std::size_t>& hashCodeOpt, uuids::uuid obj)
+    [[maybe_unused]] void StaticEventMgr::unregisterEvent(const std::optional<std::size_t>& hashCodeOpt, uuids::uuid obj)
     {
         if (!hashCodeOpt) return;
         const auto& hashCode = hashCodeOpt.value();

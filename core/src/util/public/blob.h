@@ -4,32 +4,30 @@
 #include <memory>
 #include <fstream>
 
-template class std::tuple<uint8_t*, size_t>;
-
 namespace XD
 {
     class Blob final
     {
     public:
-        Blob() {}
-        Blob(const char* path)
+        Blob() = default;
+        explicit Blob(const char* path)
         {
             std::ifstream f(path, std::ios::binary | std::ios::ate);
             if (!f.is_open()) return;
             _size = f.tellg();
             _data = new uint8_t[_size];
             f.seekg(0, std::ios::beg);
-            if (!f.read(reinterpret_cast<char*>(_data), _size))
+            if (!f.read(reinterpret_cast<char*>(_data), (ssize_t)_size))
             { delete [] _data; _data = nullptr; _size = 0; }
         }
         Blob(uint8_t* data, size_t size): _data(data), _size(size) {}
-        Blob(size_t size) : _data(size ? new uint8_t[size] : nullptr), _size(size) {}
-        Blob(Blob&& o) : _data(o._data), _size(o._size) { o._data = nullptr; o._size = 0; }
-        Blob(const Blob& o) : _data(o._data ? new uint8_t[o._size] : 0), _size(o._size)
+        explicit Blob(size_t size) : _data(size ? new uint8_t[size] : nullptr), _size(size) {}
+        Blob(Blob&& o)  noexcept : _data(o._data), _size(o._size) { o._data = nullptr; o._size = 0; }
+        Blob(const Blob& o) : _data(o._data ? new uint8_t[o._size] : nullptr), _size(o._size)
         { if (_size) memcpy(_data, o._data, o._size); }
         ~Blob() { delete [] _data; _data = nullptr; }
 
-        const Blob& operator=(Blob&& o)
+        Blob& operator=(Blob&& o) noexcept
         {
             delete [] _data;
             _data = o._data;
@@ -39,8 +37,9 @@ namespace XD
             return *this;
         }
 
-        const Blob& operator=(const Blob& o)
+        Blob& operator=(const Blob& o)
         {
+            if (&o == this) return *this;
             if (o._size != _size)
             {
                 delete [] _data;
@@ -52,8 +51,8 @@ namespace XD
             return *this;
         }
 
-        uint8_t* data() const { return _data; }
-        size_t size() const { return _size; }
+        [[nodiscard]] uint8_t* data() const { return _data; }
+        [[nodiscard]] size_t size() const { return _size; }
 
         void swap(Blob& o)
         {
@@ -83,10 +82,13 @@ namespace XD
             return data;
         }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "google-explicit-constructor"
         operator bool() { return (bool)_data; }
+#pragma clang diagnostic pop
 
     private:
         uint8_t*    _data = nullptr;
         size_t      _size = 0;
     };
-};
+}

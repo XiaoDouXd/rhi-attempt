@@ -1,14 +1,14 @@
 #include <memory>
 #include <vector>
-#include <vulkan/vulkan.hpp>
 
 #include "bufferLayoutFormat.h"
 #include "render/public/gRes/buffer/bufferLayout.hpp"
 #include "render/public/gRes/gRes.h"
-#include "vulkan/vulkan_core.h"
 #include "vulkan/vulkan_enums.hpp"
 #include "vulkan/vulkan_structs.hpp"
-#include "util/public/exce.h"
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 namespace XD::Render
 {
@@ -25,16 +25,15 @@ namespace XD::Render
         return getResHolder<gResType>(_holder);
     }
 
-    BufferLayoutBase::BufferLayoutBase(std::initializer_list<Format> typs, BufferLayoutRate rate)
+    BufferLayoutBase::BufferLayoutBase(std::initializer_list<Format> types, BufferLayoutRate rate)
     {
         _holder = std::make_unique<GResHolder<BufferLayoutBase::gResType>>();
         auto& holder = getResHolder<gResType>(_holder);
-        holder.attrs.resize(typs.size());
+        holder.attrs.resize(types.size());
 
         size_t idx = _stride = 0;
-        for (auto typ : typs)
+        for (auto typ : types)
         {
-            vk::VertexInputAttributeDescription attr;
             holder.attrs[idx]   .setFormat(VkFormatMap[(size_t)typ])
                                 .setOffset(_stride)
                                 .setLocation(idx)
@@ -138,3 +137,4 @@ namespace XD::Render
         vk::Format::eR8G8B8A8Srgb,          // USrgb8_4D,
     };
 }
+#pragma clang diagnostic pop

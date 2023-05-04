@@ -1,11 +1,9 @@
 #include <chrono>
 #include <filesystem>
-#include <fstream>
 #include <future>
 #include <list>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 
 #include "assetMgr.h"
 #include "entrance.h"
@@ -57,7 +55,6 @@ namespace XD::Asset::Mgr
             }
             catch (std::string& e)
             {
-
             }
         }
     }
@@ -137,7 +134,7 @@ namespace XD::Asset::Mgr
     // ------------------------------------- 一些构造函数
 
 #pragma region Inited
-    AssetAsyncInfo::AssetAsyncInfo(std::future<std::shared_ptr<Blob>&>&& h, const LoadFlagBits& d)
+    AssetAsyncInfo::AssetAsyncInfo([[maybe_unused]] std::future<std::shared_ptr<Blob>&>&& h, const LoadFlagBits& d)
     : flag((uint8_t)d) { handle = std::move(h); }
 
     AssetPackInfo::AssetPackInfo(const rapidjson::GenericValue<rapidjson::UTF8<>>& data, const uuids::uuid& uid)
@@ -177,16 +174,18 @@ namespace XD::Asset::Mgr
                 _inst->assetMap.insert({cuid.value(), AssetInfo(c, cuid.value(), this)});
                 auto asset = _inst->assetMap.find(cuid.value());
                 if (asset == _inst->assetMap.end())
-                    throw std::string("Failure to load AssetPackInfo: ") + uuids::to_string(cuid.value());
+                    throw Exce(__LINE__, __FILE__,
+                    std::string("Failure to load AssetPackInfo: ") + uuids::to_string(cuid.value()));
 
                 if (assets.find(asset->second.name) == assets.end())
                     assets.insert({asset->second.name, {}});
                 assets.find(asset->second.name)->
                     second.emplace_back(asset->second.asset.getId());
             }
-            catch (std::string& str) { throw str; }
+            catch (std::string& str) { throw Exce(__LINE__, __FILE__, str); }
         }
-        if (assets.empty()) throw std::string("Failure to load AssetPackInfo: ") + uuids::to_string(uid);
+        if (assets.empty()) throw Exce(__LINE__, __FILE__,
+            std::string("Failure to load AssetPackInfo: ") + uuids::to_string(uid));
     }
 
     AssetInfo::AssetInfo(const rapidjson::GenericValue<rapidjson::UTF8<>>& data, const uuids::uuid& uid, AssetPackInfo* packInfo)
@@ -206,7 +205,8 @@ namespace XD::Asset::Mgr
         size = sizeObj.IsUint64() ? typeObj.GetUint64() : 0;
         offset = offsetObj.IsUint64() ? typeObj.GetUint64() : 0;
 
-        if (!size) throw std::string("Failure to load AssetInfo: ") + uuids::to_string(uid);
+        if (!size) throw Exce(__LINE__, __FILE__,
+                              std::string("Failure to load AssetInfo: ") + uuids::to_string(uid));
         if (tagObj.IsArray())
         {
             for (auto& t : tagObj.GetArray())

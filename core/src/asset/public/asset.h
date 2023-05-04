@@ -4,6 +4,7 @@
 #include <mio/mio.hpp>
 #include <set>
 #include <span>
+#include <list>
 
 #include "util/public/uuidGen.h"
 #include "util/public/blob.h"
@@ -39,30 +40,32 @@ namespace XD::Asset
         Asset(const Asset&) = delete;
 
         void load() const noexcept;
-        void load(std::function<void(std::weak_ptr<Blob>)>) const noexcept;
-        [[nodiscard]] std::weak_ptr<Blob> loadSync() const;
-        void unload() const noexcept;
+        void load(const std::function<void(std::weak_ptr<Blob>)>&) const noexcept;
+
+        [[maybe_unused]] [[nodiscard]] std::weak_ptr<Blob> loadSync() const;
+
+        [[maybe_unused]] void unload() const noexcept;
 
         [[nodiscard]] std::weak_ptr<Blob> getData() const noexcept;
         [[nodiscard]] uuids::uuid getId() const noexcept;
         [[nodiscard]] LoadState getState() const noexcept;
 
-        operator LoadState() const noexcept;
-        operator bool() const noexcept;
+        explicit operator XD::Asset::LoadState() const noexcept;
+        explicit operator bool() const noexcept;
 
     private:
         Asset(Asset&&) = default;
-        Asset(const uuids::uuid& assetId);
+        explicit Asset(const uuids::uuid& assetId);
 
         uuids::uuid             _assetId = uuids::uuid();
         LoadState               _state = LoadState::UnLoaded;
         mutable bool            _selfLoaded = false;
         mutable std::shared_ptr<Blob> _data = nullptr;
 
-        mutable std::list<std::function<void(std::weak_ptr<Blob>)>> _loadFinishCB;
-        mutable std::list<std::function<void()>> _loadAsDependencySuccessCB;
-        mutable std::list<std::function<void()>> _loadAsDependencyFailureCB;
-        mutable std::chrono::time_point<std::chrono::steady_clock> _startLoadingTime;
+        mutable std::list<std::function<void(std::weak_ptr<Blob>)>> _loadFinishCB{};
+        mutable std::list<std::function<void()>> _loadAsDependencySuccessCB{};
+        mutable std::list<std::function<void()>> _loadAsDependencyFailureCB{};
+        mutable std::chrono::high_resolution_clock::time_point _startLoadingTime;
 
         void onLoadFinish();
         void onLoadAsDependencyFailure() const;

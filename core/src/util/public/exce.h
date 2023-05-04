@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace XD
 {
@@ -17,10 +18,15 @@ namespace XD
         /// @param file 异常触发的文件名
         Exce(int line, const char* file, const char* info = "") noexcept
             : _line(line), _file(file), _info(info) {}
+        /// @brief 统一的异常处理类
+        /// @param line 异常触发的行号
+        /// @param file 异常触发的文件名
+        Exce(int line, const char* file, std::string info = "") noexcept
+                : _line(line), _file(file), _info(std::move(info)) {}
 
         /// @brief 异常内容
         /// @return
-        const char* what() const noexcept override
+        [[maybe_unused]] const char* what() const noexcept override
         {
             std::ostringstream oss;
             oss << getType() << std::endl
@@ -32,14 +38,14 @@ namespace XD
 
         /// @brief 异常类型
         /// @return
-        virtual const char* getType() const noexcept
+        [[maybe_unused]] virtual const char* getType() const noexcept
         {
             return "XDExce";
         }
 
         /// @brief 异常详细信息
         /// @return
-        std::string getInfo() const noexcept
+        [[maybe_unused]] std::string getInfo() const noexcept
         {
             std::ostringstream oss;
             oss << "[EXCE]" << _info << std::endl
@@ -50,11 +56,11 @@ namespace XD
 
         /// @brief 异常所在行号
         /// @return
-        int getLine() const noexcept { return _line; }
+        [[maybe_unused]] int getLine() const noexcept { return _line; }
 
         /// @brief 异常所在文件名
         /// @return
-        const std::string& getFile() const noexcept { return _file; }
+        [[maybe_unused]] const std::string& getFile() const noexcept { return _file; }
 
     private:
         int _line;

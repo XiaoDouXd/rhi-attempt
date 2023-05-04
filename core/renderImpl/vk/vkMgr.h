@@ -2,12 +2,16 @@
 
 #include <optional>
 #include <vulkan/vulkan.hpp>
+#include <list>
 
 #include "uuid.h"
 
 #ifndef NDEBUG
 #define XD_VK_DEBUG_REPORT
 #endif
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 namespace XD::Render::Vk::VkMgr
 {
@@ -24,7 +28,7 @@ namespace XD::Render::Vk::VkMgr
         vk::Queue           frontQueue;
         vk::DescriptorPool  descPool;
         std::list<uint32_t> queueFamily;
-        operator bool() const { return (bool)dev; }
+        operator bool() const { return (bool)dev; } // NOLINT(google-explicit-constructor)
         Dev& operator=(const Dev&) = delete;
         Dev& operator=(Dev&&) = default;
     };
@@ -35,7 +39,7 @@ namespace XD::Render::Vk::VkMgr
 
     /// @brief c 风格的 VkResult 检查
     /// @param err result
-    void checkVkResultCtype(VkResult err);
+    void checkVkResultCType(VkResult err);
 
     /// @brief c++ 风格的 vk::Result 检查
     /// @param err result
@@ -97,3 +101,4 @@ namespace XD::Render::Vk::VkMgr
         return 0xFFFFFFFF;
     }
 }
+#pragma clang diagnostic pop

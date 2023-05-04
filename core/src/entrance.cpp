@@ -1,9 +1,8 @@
-#define XD_VK_IMPL
+// #define XD_VK_IMPL
 
 #include <iostream>
-#include <memory>
 #include <ostream>
-#include <stdint.h>
+#include <cstdint>
 #include <vector>
 
 #include "app/public/appMgr.h"
@@ -23,8 +22,8 @@ namespace XD
     int xdWndInitConf_loadingWidth = 512;
     int xdWndInitConf_loadingHeight = 288;
 
-    std::u8string xdAssetInitConf_rootResMapPath = u8"./appRes/res-map-default.json";
-    const std::locale defaultLocale = std::locale();
+    [[maybe_unused]] std::u8string xdAssetInitConf_rootResMapPath = u8"./appRes/res-map-default.json";
+    [[maybe_unused]] const std::locale defaultLocale = std::locale();
 }
 
 namespace XD
@@ -77,7 +76,7 @@ namespace XD
 using namespace XD::Render;
 
 // 临时的 main 函数
-int main(int argc, char** argv)
+int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv)
 {
     try
     {

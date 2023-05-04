@@ -9,7 +9,7 @@ namespace XD::Render::Mgr
     void init()
     {
         uint32_t extensionsCount = 0;
-        SDL_Vulkan_GetInstanceExtensions(&extensionsCount, NULL);
+        SDL_Vulkan_GetInstanceExtensions(&extensionsCount, nullptr);
         const char** extensions = new const char*[extensionsCount];
         SDL_Vulkan_GetInstanceExtensions(&extensionsCount, extensions);
 

@@ -13,9 +13,9 @@ namespace XD
     extern int xdWndInitConf_loadingWidth;
     extern int xdWndInitConf_loadingHeight;
 
-    extern std::u8string xdAssetInitConf_rootResMapPath;
+    [[maybe_unused]] extern std::u8string xdAssetInitConf_rootResMapPath;
 
-    extern const std::locale defaultLocale;
+    [[maybe_unused]] extern const std::locale defaultLocale;
 }
 
 namespace XD

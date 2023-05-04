@@ -109,7 +109,7 @@ namespace XD::Render::Vk::VkMgr
         return true;
     }
 
-    void checkVkResultCtype(VkResult r)
+    void checkVkResultCType(VkResult r)
     {
         if (r == 0) return;
         throw Exce(__LINE__, __FILE__, ("XD::VkMgr Exce: Result = " + std::to_string((int)r)).c_str());

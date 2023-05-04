@@ -60,7 +60,7 @@ namespace XD::Render
         if (!_isDynamic) return false;
         if (size != _size)
         {
-            size = _size;
+            _size = size;
             dev.destroyBuffer(holder.buf);
             dev.freeMemory(holder.devMem);
 

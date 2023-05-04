@@ -4,9 +4,11 @@
 #include <fstream>
 #include <future>
 #include <list>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <thread>
 
 #include <rapidjson/document.h>
 
@@ -23,7 +25,7 @@ namespace XD::Asset::Mgr
         LZ4,
 
         // ---------
-        Num,
+        Num [[maybe_unused]],
     };
     AssetPackAlgorithm toPackAlgorithm(const std::string_view& str);
 
@@ -34,7 +36,7 @@ namespace XD::Asset::Mgr
     public:
         std::future<std::shared_ptr<Blob>&> handle;
         uint8_t flag;
-        AssetAsyncInfo(std::future<std::shared_ptr<Blob>&>&& h, const LoadFlagBits& d);
+        AssetAsyncInfo([[maybe_unused]] std::future<std::shared_ptr<Blob>&>&& h, const LoadFlagBits& d);
     };
 
     struct AssetInfo
@@ -43,7 +45,7 @@ namespace XD::Asset::Mgr
         Asset                       asset;
         size_t                      offset;
         size_t                      size;
-        size_t                      refCount;
+        size_t                      refCount{};
         int64_t                     version;
         std::string                 name;
         std::string                 type;

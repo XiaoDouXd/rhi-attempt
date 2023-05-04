@@ -1,10 +1,13 @@
 #pragma once
 
 #include <memory>
-#include <stdint.h>
+#include <cstdint>
 
 #include "util/public/exce.h"
 #include "util/public/uuidGen.h"
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 
 namespace XD::Render
 {
@@ -46,15 +49,16 @@ namespace XD::Render
     class GRes
     {
     public:
-        uuids::uuid getUUID() const;
+        [[nodiscard]] uuids::uuid getUUID() const;
         virtual ~GRes() = default;
+
+        GRes(const GRes&) = delete;
+        const GRes& operator=(const GRes&) = delete;
 
     protected:
         GRes();
         GRes(GRes&&) = default;
         GRes& operator=(GRes&&) = default;
-        GRes(const GRes&) = delete;
-        const GRes& operator=(const GRes&) = delete;
 
         template<GResType T> static GResHolder<T>& getResHolder(std::unique_ptr<GResHolderBase>& base)
         {
@@ -203,3 +207,5 @@ namespace XD::Render
         return FormatByte[(size_t)typ];
     }
 } // namespace XD::Render
+
+#pragma clang diagnostic pop

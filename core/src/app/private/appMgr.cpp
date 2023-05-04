@@ -1,7 +1,9 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "cppcoreguidelines-narrowing-conversions"
+
 #include <memory>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_image.h>
-#include <SDL3/SDL_vulkan.h>
 
 #include "SDL_video.h"
 #include "app/public/appMgr.h"
@@ -59,7 +61,7 @@ namespace XD::AppMgr
             throw Exce(__LINE__, __FILE__, "XD::App::AppMgr: SDL 输入法设置失败");
 
         // 绑定到 vulkan 实例
-        SDL_WindowFlags wndFlags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
+        auto wndFlags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
         _inst->hWnd = SDL_CreateWindow(xdWndInitConf_wndName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, xdWndInitConf_defWndWidth - 1, xdWndInitConf_defWndHeight, wndFlags);
         SDL_SetWindowMinimumSize(_inst->hWnd, xdWndInitConf_loadingWidth, xdWndInitConf_loadingHeight);
 
@@ -78,7 +80,7 @@ namespace XD::AppMgr
         _inst.reset();
     }
 
-    void update(bool& quit, bool checkPlatformSpecialEvent)
+    void update(bool& quit, [[maybe_unused]] bool checkPlatformSpecialEvent)
     {
         // 在此处处理事件处理事件
         static SDL_Event event;
@@ -95,3 +97,4 @@ namespace XD::AppMgr
         refreshSize();
     }
 }
+#pragma clang diagnostic pop
