@@ -12,6 +12,13 @@
 
 #include "uuid.h"
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedStructInspection"
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedTypeAliasInspection"
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+
 namespace XD::Event
 {
     /// @brief 事件类基
@@ -19,12 +26,12 @@ namespace XD::Event
     /// @tparam EType 事件类本身
     /// @tparam ...ArgTypes 事件类的变量类型
     template<class EType, typename... ArgTypes>
-    class [[maybe_unused]] EventTypeBase
+    class EventTypeBase
     {
     public:
-        using _xd_eType [[maybe_unused]] = EType;
-        using _xd_fType [[maybe_unused]] = std::function<void(ArgTypes...)>;
-        using _xd_isEventType [[maybe_unused]] = std::true_type;
+        using _xd_eType = EventTypeBase<EType, ArgTypes...>;
+        using _xd_fType = std::function<void(ArgTypes...)>;
+        using _xd_isEventType = std::true_type;
     };
 
     class _xd_staticEvent_BaseFunc { public: virtual ~_xd_staticEvent_BaseFunc() = default; };
@@ -32,8 +39,8 @@ namespace XD::Event
     class _xd_staticEvent_Func : public _xd_staticEvent_BaseFunc
     {
     public:
-        explicit _xd_staticEvent_Func(typename EType::__xd_fType func): func(func) {}
-        typename EType::__xd_fType func;
+        explicit _xd_staticEvent_Func(typename EType::_xd_fType func): func(func) {}
+        typename EType::_xd_fType func;
     };
 
     class StaticEventMgr
@@ -76,8 +83,8 @@ namespace XD::Event
         /// @param cb 事件的回调
         /// @return 注册到事件的哈希值包 (可以使用这个哈希值注销事件)
         template<class EType>
-        requires EType::__cc_isEventType::value && std::is_same<typename EType::__cc_eType, EType>::value
-        [[maybe_unused]] static std::optional<std::size_t> registerEvent(uuids::uuid obj, typename EType::__cc_fType cb)
+        requires EType::_xd_isEventType::value && std::is_base_of<typename EType::_xd_eType, EType>::value
+        static std::optional<std::size_t> registerEvent(uuids::uuid obj, typename EType::_xd_fType cb)
         {
             std::size_t hashCode = typeid(EType).hash_code();
             auto& eDic = _inst->staticEvents;
@@ -97,8 +104,8 @@ namespace XD::Event
         /// @tparam EType 注销的事件类型
         /// @param obj 监听器的 id (一般用对象内存地址描述)
         template<class EType>
-        requires EType::__cc_isEventType::value && std::is_same<typename EType::__cc_eType, EType>::value
-        [[maybe_unused]] static std::optional<std::size_t> unregisterEvent(uuids::uuid obj)
+        requires EType::_xd_isEventType::value && std::is_base_of<typename EType::_xd_eType, EType>::value
+        static std::optional<std::size_t> unregisterEvent(uuids::uuid obj)
         {
             std::size_t hashCode = typeid(EType).hash_code();
             auto& eDic = _inst->staticEvents;
@@ -120,18 +127,18 @@ namespace XD::Event
         /// @brief 注销事件
         /// @param hashCode 事件的哈希值
         /// @param obj 监听器的 id (一般用对象内存地址描述)
-        [[maybe_unused]] static void unregisterEvent(const std::size_t& hashCode, uuids::uuid obj);
+        static void unregisterEvent(const std::size_t& hashCode, uuids::uuid obj);
 
         /// @brief 注销事件
         /// @param hashCodeOpt 事件的哈希值包
         /// @param obj 监听器的 id (一般用对象内存地址描述)
-        [[maybe_unused]] static void unregisterEvent(const std::optional<std::size_t>& hashCodeOpt, uuids::uuid obj);
+        static void unregisterEvent(const std::optional<std::size_t>& hashCodeOpt, uuids::uuid obj);
 
         /// @brief 某事件的所有监听
         /// @tparam EType 事件类型
         template<class EType>
-        requires EType::__cc_isEventType::value && std::is_same<typename EType::__cc_eType, EType>::value
-        [[maybe_unused]] static void clearEvent()
+        requires EType::_xd_isEventType::value && std::is_base_of<typename EType::_xd_eType, EType>::value
+        static void clearEvent()
         {
             std::size_t hashCode = typeid(EType).hash_code();
             auto& eDic = _inst->staticEvents;
@@ -152,9 +159,9 @@ namespace XD::Event
         /// @tparam ...ArgTypes 参数包 (定义事件类型时所指定的参数)
         /// @param ...args 要传递参数
         template<class EType, typename... ArgTypes>
-        requires EType::__cc_isEventType::value && std::is_same<typename EType::__cc_eType, EType>::value
-        && std::is_same<typename EType::__cc_fType, std::function<void(ArgTypes...)>>::value
-        [[maybe_unused]] static void broadcast(ArgTypes... args)
+        requires EType::_xd_isEventType::value && std::is_base_of<typename EType::_xd_eType, EType>::value
+        && std::is_same<typename EType::_xd_fType, std::function<void(ArgTypes...)>>::value
+        static void broadcast(ArgTypes... args)
         {
             std::size_t hashCode = typeid(EType).hash_code();
             auto& eDic = _inst->staticEvents;
@@ -171,9 +178,9 @@ namespace XD::Event
         /// @tparam ...ArgTypes 参数包 (定义事件类型时所指定的参数)
         /// @param ...args 要传递的参数
         template<class EType, typename... ArgTypes>
-        requires EType::__cc_isEventType::value && std::is_same<typename EType::__cc_eType, EType>::value
-        && std::is_same<typename EType::__cc_fType, std::function<void(ArgTypes...)>>::value
-        [[maybe_unused]] static void broadcastAsync(ArgTypes... args)
+        requires EType::_xd_isEventType::value && std::is_base_of<typename EType::_xd_eType, EType>::value
+        && std::is_same<typename EType::_xd_fType, std::function<void(ArgTypes...)>>::value
+        static void broadcastAsync(ArgTypes... args)
         {
             std::size_t hashCode = typeid(EType).hash_code();
             auto& eDic = _inst->staticEvents;
@@ -202,3 +209,7 @@ namespace XD::Event
         static void destroy();
     };
 } // namespace XD::Event
+
+#pragma clang diagnostic pop
+#pragma clang diagnostic pop
+#pragma clang diagnostic pop
