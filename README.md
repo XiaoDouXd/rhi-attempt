@@ -47,7 +47,7 @@ sudo apt install vulkan-sdk
 
 ```cmake
 # --------------------------------- 必要的 --
-set(CMAKE_TOOLCHAIN_FILE "{}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file") # vcpkg 目录
+set(VCPKG_ROOT "{}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file") # vcpkg 目录
 
 # --------------------------------- 可选的 --
 ```

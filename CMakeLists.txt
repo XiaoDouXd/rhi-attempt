@@ -12,10 +12,11 @@ else()
     message(WARNING ${XD_PROJECT_NAME} "::CMakeLists::Warning: File ${CMAKE_CURRENT_SOURCE_DIR}/../Config.cmake not found, Please create one.")
 endif()
 
-if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+if (NOT DEFINED VCPKG_ROOT)
     message(FATAL_ERROR  ${XD_PROJECT_NAME} "::CMakeLists::Error: Vcpkg not found. Please define CMAKE_TOOLCHAIN_FILE var to point the dir to vcpkg.cmake")
 else()
-    message(STATUS ${XD_PROJECT_NAME} "::CMakeLists::Info: Vcpkg - found: ${CMAKE_TOOLCHAIN_FILE}")
+    set(CMAKE_TOOLCHAIN_FILE ${CMAKE_TOOLCHAIN_FILE} ${VCPKG_ROOT})
+    message(STATUS ${XD_PROJECT_NAME} "::CMakeLists::Info: Vcpkg - found: ${VCPKG_ROOT}")
 endif()
 
 # ----------------------------------------------------- init proj
